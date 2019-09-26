@@ -1,0 +1,9 @@
+name: integration-test
+on: [pull_request]
+jobs:
+  integration-test:
+    name: Integration test
+    container: seiyab/rust-cc:latest
+    steps:
+      - name: test
+        run: make test

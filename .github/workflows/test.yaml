@@ -3,6 +3,7 @@ on: [pull_request]
 jobs:
   integration-test:
     name: Integration test
+    runs-on: ubuntu-latest
     container: seiyab/rust-cc:latest
     steps:
       - name: test

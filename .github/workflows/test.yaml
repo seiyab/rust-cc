@@ -7,5 +7,7 @@ jobs:
     container: seiyab/rust-cc:latest
     steps:
       - uses: actions/checkout@v1
+      - name: setup
+        run: rustup default stable
       - name: test
         run: make test

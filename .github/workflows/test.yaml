@@ -6,5 +6,6 @@ jobs:
     runs-on: ubuntu-latest
     container: seiyab/rust-cc:latest
     steps:
+      - uses: actions/checkout@v1
       - name: test
         run: make test

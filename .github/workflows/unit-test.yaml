@@ -1,0 +1,13 @@
+name: unite-test
+on: [pull_request]
+jobs:
+  integration-test:
+    name: Unit test
+    runs-on: ubuntu-latest
+    container: seiyab/rust-cc:latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: setup
+        run: rustup default stable
+      - name: test
+        run: cargo test

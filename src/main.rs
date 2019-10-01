@@ -16,17 +16,17 @@ fn main() {
     println!("main:");
 
     let mut src = args[1].clone();
-    let tokens = tokenize(&src);
+    let tokens = tokenize(&src).unwrap();
     let mut token_reader = TokenReader::new(&tokens);
 
-    if let Some(&Token::Number(num)) = token_reader.next() {
+    if let Some(&Token::Number(num, _)) = token_reader.next() {
         println!("  mov rax, {}", num);
     } else {
         log_error("最初のトークンが数字ではありません");
         process::exit(1);
     }
 
-    while let Some(&Token::Operator(c)) = token_reader.next() {
+    while let Some(&Token::Operator(c, _)) = token_reader.next() {
         match c {
             '+' => {
                 if let Ok(num) = token_reader.read_number() {
@@ -52,29 +52,32 @@ fn main() {
     process::exit(0);
 }
 
-fn tokenize(s: &String) -> Vec<Token> {
+fn tokenize(s: &String) -> Result<Vec<Token>, i64> {
     let mut src = s.clone();
     let mut tokens = Vec::new();
+    let src_len = src.len() as i64;
     while let Some(head) = src.chars().next() {
+        let remaining = src.len() as i64;
+        let pos = src_len - remaining;
         if head==' ' {
             src.drain(..1);
         } else if head=='+' || head=='-' {
             src.drain(..1);
-            tokens.push(Token::Operator(head));
+            tokens.push(Token::Operator(head, pos));
         } else if head.is_digit(10) {
             let n = drain_number(&mut src).unwrap();
-            tokens.push(Token::Number(n));
+            tokens.push(Token::Number(n, pos));
         } else {
-            log_error("想定外の文字です\n");
+            return Err(pos)
         }
     }
-    tokens
+    Ok(tokens)
 }
 
 #[derive(Debug, PartialEq)]
 enum Token {
-    Operator(char),
-    Number(i64),
+    Operator(char, i64),
+    Number(i64, i64),
 }
 
 struct TokenReader<'a> {
@@ -111,7 +114,7 @@ impl TokenReader<'_> {
 
     fn read_number(&mut self) -> Result<i64, ()> {
         match self.next() {
-            Some(&Token::Number(n)) => Ok(n),
+            Some(&Token::Number(n, _)) => Ok(n),
             _ => Err(()),
         }
     }
@@ -143,13 +146,22 @@ mod tests {
     fn test_tokenize() {
         let src = String::from("1 + 23 - 2");
 
-        let token = tokenize(&src);
+        let token = tokenize(&src).unwrap();
 
-        assert_eq!(token[0], Token::Number(1));
-        assert_eq!(token[1], Token::Operator('+'));
-        assert_eq!(token[2], Token::Number(23));
-        assert_eq!(token[3], Token::Operator('-'));
-        assert_eq!(token[4], Token::Number(2));
+        assert_eq!(token[0], Token::Number(1, 0));
+        assert_eq!(token[1], Token::Operator('+', 2));
+        assert_eq!(token[2], Token::Number(23, 4));
+        assert_eq!(token[3], Token::Operator('-', 7));
+        assert_eq!(token[4], Token::Number(2, 9));
         assert_eq!(token.len(), 5);
+    }
+
+    #[test]
+    fn test_tokenize_invalid_string() {
+        let src = String::from("1 + foo");
+
+        let error = tokenize(&src);
+
+        assert_eq!(error, Err(4));
     }
 }

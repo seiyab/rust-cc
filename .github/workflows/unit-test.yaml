@@ -1,4 +1,4 @@
-name: unite-test
+name: unit-test
 on: [pull_request]
 jobs:
   integration-test:

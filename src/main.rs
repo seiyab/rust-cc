@@ -1,7 +1,6 @@
 use std::env;
 use std::io::{self, Write};
 use std::process;
-use std::cmp::min;
 use std::str::FromStr;
 
 fn main() {
@@ -15,7 +14,7 @@ fn main() {
     println!(".global main");
     println!("main:");
 
-    let mut src = args[1].clone();
+    let src = args[1].clone();
     let tokens = tokenize(&src).unwrap();
     let mut token_reader = TokenReader::new(&tokens);
 
@@ -104,14 +103,6 @@ impl TokenReader<'_> {
         TokenReader { tokens: tokens, needle: 0 }
     }
 
-    fn peek(&self) -> Option<&Token> {
-        if &self.needle < &self.tokens.len() {
-            Some(&self.tokens[self.needle])
-        } else {
-            None
-        }
-    }
-
     fn read_number(&mut self) -> Result<i64, ()> {
         match self.next() {
             Some(&Token::Number(n, _)) => Ok(n),
@@ -119,12 +110,6 @@ impl TokenReader<'_> {
         }
     }
 }
-
-
-fn drain_head(s: &mut String) -> Option<char> {
-    s.drain(..min(1, s.len())).last()
-}
-
 
 fn drain_number(src: &mut String) -> Result<i64, <i64 as FromStr>::Err> {
     let offset = src.find(|c: char| !c.is_digit(10)).unwrap_or(src.len());
@@ -135,7 +120,7 @@ fn drain_number(src: &mut String) -> Result<i64, <i64 as FromStr>::Err> {
 fn log_error(s: &str) {
     let stderr = io::stderr();
     let mut errhandle = stderr.lock();
-    errhandle.write_all(String::from(format!("{}\n", s)).as_bytes());
+    let _ = errhandle.write_all(String::from(format!("{}\n", s)).as_bytes());
 }
 
 #[cfg(test)]

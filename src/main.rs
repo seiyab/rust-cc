@@ -7,6 +7,7 @@ use sourcecode::Position;
 
 mod token;
 use token::Token;
+use token::Operator;
 use token::TokenReader;
 use token::tokenize;
 
@@ -46,16 +47,18 @@ fn main() {
     }
 
     while let Some(findable_token) = token_reader.next() {
-        if let Token::Operator(c) = findable_token.value() {
+        if let Token::Operator(operator) = findable_token.value() {
             let number_token = token_reader.read_number();
             match number_token {
-                Ok(num) => match c {
-                    '+' => println!("  add rax, {}", num),
-                    _ => println!("  sub rax, {}", num),
+                Ok(num) => match operator {
+                    Operator::Add => println!("  add rax, {}", num),
+                    Operator::Sub => println!("  sub rax, {}", num),
+                    _ => {
+                        point_error(&src, findable_token.position().0, "未対応のトークンです");
+                        process::exit(1);
+                    }
                 }
                 Err(Some(Position(pos))) => {
-                    point_error(&src, pos, "数字を期待していました");
-                    process::exit(1);
                 },
                 _ => {
                     point_error(&src, src.len(), "数字を期待していましたが、トークンがありません");

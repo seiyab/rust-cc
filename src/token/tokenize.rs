@@ -12,10 +12,16 @@ pub fn tokenize(s: &String) -> Result<Vec<Findable<Token>>, usize> {
         let position = (src_len - remaining) as usize;
         if head==' ' {
             src.drain(..1);
-        } else if head=='+' || head=='-' {
+        } else if head=='+' {
             src.drain(..1);
             tokens.push(Findable::new(
-                Token::Operator(head),
+                Token::add(),
+                Position(position)
+            ));
+        } else if head=='-' {
+            src.drain(..1);
+            tokens.push(Findable::new(
+                Token::sub(),
                 Position(position)
             ));
         } else if head.is_digit(10) {
@@ -84,11 +90,11 @@ mod tests {
 
         assert_eq!(findable_tokens[0].value(), &Token::Number(1));
         assert_eq!(findable_tokens[0].position(), Position(0));
-        assert_eq!(findable_tokens[1].value(), &Token::Operator('+'));
+        assert_eq!(findable_tokens[1].value(), &Token::add());
         assert_eq!(findable_tokens[1].position(), Position(2));
         assert_eq!(findable_tokens[2].value(), &Token::Number(23));
         assert_eq!(findable_tokens[2].position(), Position(4));
-        assert_eq!(findable_tokens[3].value(), &Token::Operator('-'));
+        assert_eq!(findable_tokens[3].value(), &Token::sub());
         assert_eq!(findable_tokens[3].position(), Position(7));
         assert_eq!(findable_tokens[4].value(), &Token::Number(2));
         assert_eq!(findable_tokens[4].position(), Position(9));

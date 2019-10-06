@@ -95,6 +95,7 @@ fn tokenize(s: &String) -> Result<Vec<TokenAndPosition>, usize> {
     Ok(tokens)
 }
 
+#[derive(Debug, PartialEq)]
 struct TokenAndPosition {
     token: Token,
     position: Position,
@@ -168,19 +169,19 @@ mod tests {
     fn test_tokenize() {
         let src = String::from("1 + 23 - 2");
 
-        let token_and_position = tokenize(&src).unwrap();
+        let token_and_positions = tokenize(&src).unwrap();
 
-        assert_eq!(token[0].token, Token::Number(1));
-        assert_eq!(token[0].position, Position(0));
-        assert_eq!(token[1].token, Token::Operator('+'));
-        assert_eq!(token[1]position, Token::Operator('+'));
-        assert_eq!(token[2].token, Token::Number(23));
-        assert_eq!(token[2].position, Position(4));
-        assert_eq!(token[3]token, Token::Operator('-'));
-        assert_eq!(token[3]position, Position(7));
-        assert_eq!(token[4].token, Token::Number(2));
-        assert_eq!(token[4].position, Position(9));
-        assert_eq!(token.len(), 5);
+        assert_eq!(token_and_positions[0].token, Token::Number(1));
+        assert_eq!(token_and_positions[0].position, Position(0));
+        assert_eq!(token_and_positions[1].token, Token::Operator('+'));
+        assert_eq!(token_and_positions[1].position, Position(2));
+        assert_eq!(token_and_positions[2].token, Token::Number(23));
+        assert_eq!(token_and_positions[2].position, Position(4));
+        assert_eq!(token_and_positions[3].token, Token::Operator('-'));
+        assert_eq!(token_and_positions[3].position, Position(7));
+        assert_eq!(token_and_positions[4].token, Token::Number(2));
+        assert_eq!(token_and_positions[4].position, Position(9));
+        assert_eq!(token_and_positions.len(), 5);
     }
 
     #[test]

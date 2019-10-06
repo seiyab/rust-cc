@@ -21,4 +21,12 @@ impl <T> Findable<T> {
     pub fn position(self: &Self) -> Position {
         self.position
     }
+
+    pub fn map<S, F>(self: &Self, func: F) -> Findable<S> 
+    where F: Fn(&T) -> S {
+        Findable {
+            value: func(&self.value),
+            position: self.position,
+        }
+    }
 }

@@ -11,6 +11,8 @@ use token::Operator;
 use token::TokenReader;
 use token::tokenize;
 
+mod parse;
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
@@ -58,7 +60,9 @@ fn main() {
                         process::exit(1);
                     }
                 }
-                Err(Some(Position(pos))) => {
+                Err(Some(Position(position))) => {
+                    point_error(&src, position, "数ではありません。");
+                    process::exit(1);
                 },
                 _ => {
                     point_error(&src, src.len(), "数字を期待していましたが、トークンがありません");

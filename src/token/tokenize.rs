@@ -75,6 +75,18 @@ impl TokenReader<'_> {
             _ => Err(None)
         }
     }
+
+    pub fn peek(&self) -> Option<&Findable<Token>> {
+        if &self.needle < &self.tokens.len() {
+            Some(&self.tokens[self.needle])
+        } else {
+            None
+        }
+    }
+
+    pub fn skip(&mut self) {
+        self.needle += 1;
+    }
 }
 
 

@@ -33,8 +33,8 @@ fn main() {
 
     let first_token = token_reader.next();
     match first_token {
-        Some(token_and_position) => 
-        if let Token::Number(num) = token_and_position.token { println!("  mov rax, {}", num) }
+        Some(findable_token) => 
+        if let Token::Number(num) = findable_token.value() { println!("  mov rax, {}", num) }
         else {
             point_error(&src, 0, "最初のトークンが数字ではありません");
             process::exit(1);
@@ -45,8 +45,8 @@ fn main() {
         },
     }
 
-    while let Some(token_and_position) = token_reader.next() {
-        if let Token::Operator(c) = token_and_position.token {
+    while let Some(findable_token) = token_reader.next() {
+        if let Token::Operator(c) = findable_token.value() {
             let number_token = token_reader.read_number();
             match number_token {
                 Ok(num) => match c {
@@ -63,7 +63,7 @@ fn main() {
                 }
             }
         } else {
-            point_error(&src, token_and_position.position.0, "演算子を期待していました");
+            point_error(&src, findable_token.position().0, "演算子を期待していました");
             process::exit(1);
 
         }

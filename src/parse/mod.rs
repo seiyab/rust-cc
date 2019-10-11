@@ -1,6 +1,6 @@
 mod syntaxtree;
+mod expression;
+mod multiply;
 pub use self::syntaxtree::SyntaxTree;
-pub use self::syntaxtree::Expression;
-
-mod parser;
-pub use self::parser::parse;
+pub use self::expression::Expression;
+pub use self::multiply::Multiply;

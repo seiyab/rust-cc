@@ -72,7 +72,6 @@ fn main() {
         } else {
             point_error(&src, findable_token.position().0, "演算子を期待していました");
             process::exit(1);
-
         }
     }
 

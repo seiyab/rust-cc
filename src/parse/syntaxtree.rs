@@ -1,12 +1,17 @@
-use sourcecode::Findable;
+use sourcecode::Position;
 
-use token::Operator;
+use token::TokenReader;
+
+use parse::Expression;
 
 pub struct SyntaxTree {
-    pub expression: Expression,
+    expression: Expression,
 }
 
-pub struct Expression {
-    pub head: Findable<i64>,
-    pub tail: Vec<(Findable<Operator>, Findable<i64>)>
+impl SyntaxTree {
+    pub fn parse(mut token_reader: &mut TokenReader)
+    -> Result<SyntaxTree, (Option<Position>, String)> {
+        Expression::parse(&mut token_reader)
+        .map(|expression| SyntaxTree {expression})
+    }
 }

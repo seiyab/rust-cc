@@ -3,7 +3,6 @@ use std::io::{self, Write};
 use std::process;
 
 mod sourcecode;
-use sourcecode::Position;
 
 mod token;
 use token::TokenReader;
@@ -51,10 +50,6 @@ fn main() {
     for instruction in compile(&syntax_tree) {
         println!("{}", instruction.destination_code());
     }
-
-    println!("  pop rax");
-
-    println!("  ret");
 
     process::exit(0);
 }

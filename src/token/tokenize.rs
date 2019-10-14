@@ -79,15 +79,6 @@ impl TokenReader<'_> {
         TokenReader { tokens: tokens, needle: 0 }
     }
 
-    pub fn read_number(&mut self) -> Result<i64, Option<Position>> {
-        match self.next() {
-            Some(findable_token) =>
-            if let &Token::Number(n) = findable_token.value() { Ok(n) }
-            else { Err(Some(findable_token.position())) },
-            _ => Err(None)
-        }
-    }
-
     pub fn peek(&self) -> Option<&Findable<Token>> {
         if &self.needle < &self.tokens.len() {
             Some(&self.tokens[self.needle])

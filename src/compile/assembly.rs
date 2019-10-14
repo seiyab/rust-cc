@@ -1,5 +1,3 @@
-use std::fmt::format;
-
 pub enum Instruction {
     Push(Readable),
     Pop(Register),

@@ -9,7 +9,10 @@ use compile::assembly::Register;
 use compile::assembly::Readable;
 
 pub fn compile(syntaxtree: &SyntaxTree) -> Vec<Instruction> {
-    compile_expression(syntaxtree.expression())
+    let mut instructions = compile_expression(syntaxtree.expression());
+    instructions.push(Instruction::Pop(Register::Rax));
+    instructions.push(Instruction::Ret);
+    instructions
 }
 
 fn compile_expression(expression: &Expression) -> Vec<Instruction> {

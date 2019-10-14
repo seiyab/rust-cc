@@ -12,30 +12,6 @@ pub fn tokenize(s: &String) -> Result<Vec<Findable<Token>>, usize> {
         let position = (src_len - remaining) as usize;
         if head==' ' {
             src.drain(..1);
-        } else if head=='+' {
-            src.drain(..1);
-            tokens.push(Findable::new(
-                Token::add(),
-                Position(position)
-            ));
-        } else if head=='-' {
-            src.drain(..1);
-            tokens.push(Findable::new(
-                Token::sub(),
-                Position(position)
-            ));
-        } else if head=='*' {
-            src.drain(..1);
-            tokens.push(Findable::new(
-                Token::mul(),
-                Position(position)
-            ));
-        } else if head=='/' {
-            src.drain(..1);
-            tokens.push(Findable::new(
-                Token::div(),
-                Position(position)
-            ));
         } else if head.is_digit(10) {
             let n = drain_number(&mut src).unwrap();
             tokens.push(Findable::new(
@@ -43,7 +19,20 @@ pub fn tokenize(s: &String) -> Result<Vec<Findable<Token>>, usize> {
                 Position(position)
             ));
         } else {
-            return Err(position)
+            src.drain(..1);
+            let token = match head {
+                '+' => Token::add(),
+                '-' => Token::sub(),
+                '*' => Token::mul(),
+                '/' => Token::div(),
+                '(' => Token::left_round_bracket(),
+                ')' => Token::right_round_bracket(),
+                _ => return Err(position),
+            };
+            tokens.push(Findable::new(
+                token,
+                Position(position)
+            ))
         }
     }
     Ok(tokens)

@@ -51,6 +51,14 @@ impl Multiply {
         }
         Ok(multiply)
     }
+
+    pub fn head(&self) -> &Findable<i64> {
+        &self.head
+    }
+
+    pub fn tail(&self) -> &Vec<(Findable<Operator>, Findable<i64>)> {
+        &self.tail
+    }
 }
 
 #[cfg(test)]

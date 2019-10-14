@@ -14,4 +14,8 @@ impl SyntaxTree {
         Expression::parse(&mut token_reader)
         .map(|expression| SyntaxTree {expression})
     }
+
+    pub fn expression(&self) -> &Expression {
+        &self.expression
+    }
 }

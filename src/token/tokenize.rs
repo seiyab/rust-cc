@@ -24,6 +24,18 @@ pub fn tokenize(s: &String) -> Result<Vec<Findable<Token>>, usize> {
                 Token::sub(),
                 Position(position)
             ));
+        } else if head=='*' {
+            src.drain(..1);
+            tokens.push(Findable::new(
+                Token::mul(),
+                Position(position)
+            ));
+        } else if head=='/' {
+            src.drain(..1);
+            tokens.push(Findable::new(
+                Token::div(),
+                Position(position)
+            ));
         } else if head.is_digit(10) {
             let n = drain_number(&mut src).unwrap();
             tokens.push(Findable::new(
@@ -96,21 +108,32 @@ mod tests {
 
     #[test]
     fn test_tokenize() {
-        let src = String::from("1 + 23 - 2");
+        let src = String::from("1 + 23 - 2 * 4");
 
         let findable_tokens = tokenize(&src).unwrap();
 
         assert_eq!(findable_tokens[0].value(), &Token::Number(1));
         assert_eq!(findable_tokens[0].position(), Position(0));
+
         assert_eq!(findable_tokens[1].value(), &Token::add());
         assert_eq!(findable_tokens[1].position(), Position(2));
+
         assert_eq!(findable_tokens[2].value(), &Token::Number(23));
         assert_eq!(findable_tokens[2].position(), Position(4));
+
         assert_eq!(findable_tokens[3].value(), &Token::sub());
         assert_eq!(findable_tokens[3].position(), Position(7));
+
         assert_eq!(findable_tokens[4].value(), &Token::Number(2));
         assert_eq!(findable_tokens[4].position(), Position(9));
-        assert_eq!(findable_tokens.len(), 5);
+
+        assert_eq!(findable_tokens[5].value(), &Token::mul());
+        assert_eq!(findable_tokens[5].position(), Position(11));
+
+        assert_eq!(findable_tokens[6].value(), &Token::Number(4));
+        assert_eq!(findable_tokens[6].position(), Position(13));
+
+        assert_eq!(findable_tokens.len(), 7);
     }
 
     #[test]

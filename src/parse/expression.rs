@@ -38,6 +38,14 @@ impl Expression {
         }
         Ok(expression)
     }
+
+    pub fn head(&self) -> &Multiply {
+        &self.head
+    }
+
+    pub fn tail(&self) -> &Vec<(Findable<Operator>, Multiply)> {
+        &self.tail
+    }
 }
 
 

@@ -6,12 +6,14 @@ mod sourcecode;
 use sourcecode::Position;
 
 mod token;
-use token::Token;
-use token::Operator;
 use token::TokenReader;
 use token::tokenize;
 
 mod parse;
+use parse::SyntaxTree;
+
+mod compile;
+use compile::compile;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -26,7 +28,7 @@ fn main() {
 
     let src = args[1].clone();
     let tokens = match tokenize(&src) {
-        Ok(t) => t,
+        Ok(tokens) => tokens,
         Err(pos) => {
             point_error(&src, pos, "トークナイズできません");
             process::exit(1);
@@ -34,46 +36,23 @@ fn main() {
     };
     let mut token_reader = TokenReader::new(&tokens);
 
-    let first_token = token_reader.next();
-    match first_token {
-        Some(findable_token) => 
-        if let Token::Number(num) = findable_token.value() { println!("  mov rax, {}", num) }
-        else {
-            point_error(&src, 0, "最初のトークンが数字ではありません");
+    let syntax_tree = match SyntaxTree::parse(&mut token_reader) {
+        Ok(st) => st,
+        Err((Some(position), message)) => {
+            point_error(&src, position.0, message.as_str());
             process::exit(1);
         },
-        _ => {
-            point_error(&src, 0, "最初のトークンが数字ではありません");
-            process::exit(1);
+        Err((None, message)) => {
+            log_error(message.as_str());
+            process::exit(1)
         },
+    };
+
+    for instruction in compile(&syntax_tree) {
+        println!("{}", instruction.destination_code());
     }
 
-    while let Some(findable_token) = token_reader.next() {
-        if let Token::Operator(operator) = findable_token.value() {
-            let number_token = token_reader.read_number();
-            match number_token {
-                Ok(num) => match operator {
-                    Operator::Add => println!("  add rax, {}", num),
-                    Operator::Sub => println!("  sub rax, {}", num),
-                    _ => {
-                        point_error(&src, findable_token.position().0, "未対応のトークンです");
-                        process::exit(1);
-                    }
-                }
-                Err(Some(Position(position))) => {
-                    point_error(&src, position, "数ではありません。");
-                    process::exit(1);
-                },
-                _ => {
-                    point_error(&src, src.len(), "数字を期待していましたが、トークンがありません");
-                    process::exit(1);
-                }
-            }
-        } else {
-            point_error(&src, findable_token.position().0, "演算子を期待していました");
-            process::exit(1);
-        }
-    }
+    println!("  pop rax");
 
     println!("  ret");
 

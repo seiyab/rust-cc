@@ -5,25 +5,22 @@ use token::Operator;
 use token::Token;
 use token::TokenReader;
 
+use parse::Primary;
+
 pub struct Multiply {
-    pub head: Findable<i64>,
-    pub tail: Vec<(Findable<Operator>, Findable<i64>)>,
+    pub head: Primary,
+    pub tail: Vec<(Findable<Operator>, Primary)>,
 }
 
 impl Multiply {
-    pub fn parse(token_reader: &mut TokenReader)
+    pub fn parse(mut token_reader: &mut TokenReader)
     -> Result<Multiply, (Option<Position>, String)> {
-        let first_findable_token = match token_reader.next() {
-            Some(findable_token) => findable_token,
-            None => return Err((None, String::from("式を期待していましたが、トークンがありませんでした。"))),
-        };
-        let first_number = match first_findable_token.value() {
-            &Token::Number(n) => n,
-            _ => return Err((Some(first_findable_token.position()), String::from("数ではありません。"))),
-        };
-        let mut multiply = Multiply {
-            head: first_findable_token.map(|_| first_number),
-            tail: Vec::new(),
+        let mut multiply = match Primary::parse(&mut token_reader) {
+            Ok(first_primary) => Multiply {
+                head: first_primary,
+                tail: Vec::new(),
+            },
+            Err(err) => return Err(err),
         };
         while let Some(findable_token) = token_reader.peek() {
             let token = findable_token.value();
@@ -38,25 +35,20 @@ impl Multiply {
                 _ => break,
             };
             token_reader.skip();
-            let number = if let Some(findable_token) = token_reader.peek() {
-                match findable_token.value() {
-                    &Token::Number(number) => Findable::new(number, findable_token.position()),
-                    _ => return Err((Some(findable_token.position()), String::from("数ではありません。"))),
-                }
-            } else {
-                return Err((None, String::from("数を期待していましたが、トークンがありませんでした。")));
+            let primary = match Primary::parse(&mut token_reader) {
+                Ok(primary) => primary,
+                Err(err) => return Err(err),
             };
-            token_reader.skip();
-            multiply.tail.push((mul_or_div, number));
+            multiply.tail.push((mul_or_div, primary));
         }
         Ok(multiply)
     }
 
-    pub fn head(&self) -> &Findable<i64> {
+    pub fn head(&self) -> &Primary {
         &self.head
     }
 
-    pub fn tail(&self) -> &Vec<(Findable<Operator>, Findable<i64>)> {
+    pub fn tail(&self) -> &Vec<(Findable<Operator>, Primary)> {
         &self.tail
     }
 }
@@ -79,12 +71,7 @@ mod tests {
 
         let multiply = Multiply::parse(&mut token_reader).unwrap();
 
-        assert_eq!(multiply.head.value(), &3);
-
         assert_eq!(multiply.tail[0].0.value(), &Operator::Mul);
-        assert_eq!(multiply.tail[0].1.value(), &5);
-
         assert_eq!(multiply.tail[1].0.value(), &Operator::Div);
-        assert_eq!(multiply.tail[1].1.value(), &1);
     }
 }

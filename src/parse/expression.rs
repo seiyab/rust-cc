@@ -67,12 +67,7 @@ mod tests {
 
         let expression = Expression::parse(&mut token_reader).unwrap();
 
-        assert_eq!(expression.head.head.value(), &3);
-
         assert_eq!(expression.tail[0].0.value(), &Operator::Add);
-        assert_eq!(expression.tail[0].1.head.value(), &5);
-
         assert_eq!(expression.tail[1].0.value(), &Operator::Sub);
-        assert_eq!(expression.tail[1].1.head.value(), &1);
     }
 }

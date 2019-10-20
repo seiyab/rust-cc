@@ -1,6 +1,7 @@
 CFLAGS=-std=c11 -g -static
+rustfiles := src/**/*.rs
 
-main: src/main.rs
+main: $(rustfiles)
 	rustc src/main.rs
 
 test: main

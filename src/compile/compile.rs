@@ -3,6 +3,7 @@ use token::Operator;
 use parse::SyntaxTree;
 use parse::Expression;
 use parse::Multiply;
+use parse::Unary;
 use parse::Primary;
 
 use compile::assembly::Instruction;
@@ -36,9 +37,9 @@ fn compile_expression(expression: &Expression) -> Vec<Instruction> {
 fn compile_multiply(multiply: &Multiply) -> Vec<Instruction> {
     let mut instructions = Vec::new();
     let head = multiply.head();
-    instructions.append(&mut compile_primary(head));
-    for (findable_operator, primary) in multiply.tail() {
-        instructions.append(&mut compile_primary(primary));
+    instructions.append(&mut compile_unary(head));
+    for (findable_operator, unary) in multiply.tail() {
+        instructions.append(&mut compile_unary(unary));
         instructions.push(Instruction::Pop(Register::Rdi));
         instructions.push(Instruction::Pop(Register::Rax));
         match findable_operator.value() {
@@ -49,6 +50,21 @@ fn compile_multiply(multiply: &Multiply) -> Vec<Instruction> {
             }
         }
         instructions.push(Instruction::Push(Readable::Register(Register::Rax)))
+    }
+    instructions
+}
+
+fn compile_unary(unary: &Unary) -> Vec<Instruction> {
+    let mut instructions = Vec::new();
+    match &unary {
+        &Unary::Positive(primary) => instructions.append(&mut compile_primary(&primary)),
+        &Unary::Negative(primary) => {
+            instructions.append(&mut compile_primary(&primary));
+            instructions.push(Instruction::Pop(Register::Rdi));
+            instructions.push(Instruction::Mov(Register::Rax, 0));
+            instructions.push(Instruction::Sub(Register::Rax, Readable::Register(Register::Rdi)));
+            instructions.push(Instruction::Push(Readable::Register(Register::Rax)));
+        }
     }
     instructions
 }

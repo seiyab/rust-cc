@@ -6,6 +6,7 @@ pub enum Instruction {
     Imul(Register, Readable),
     Cqo,
     Idiv(Register),
+    Mov(Register, i64),
     Ret,
 }
 
@@ -19,6 +20,7 @@ impl Instruction {
             &Instruction::Imul(acc, x) => format!("  imul {}, {}", acc.symbol(), x.symbol()),
             &Instruction::Cqo => format!("  cqo"),
             &Instruction::Idiv(register) => format!("  idiv {}", register.symbol()),
+            &Instruction::Mov(register, x) => format!("  mov {}, {}", register.symbol(), x),
             &Instruction::Ret => format!("  ret"),
         }
     }

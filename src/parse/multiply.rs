@@ -5,19 +5,19 @@ use token::Operator;
 use token::Token;
 use token::TokenReader;
 
-use parse::Primary;
+use parse::Unary;
 
 pub struct Multiply {
-    pub head: Primary,
-    pub tail: Vec<(Findable<Operator>, Primary)>,
+    pub head: Unary,
+    pub tail: Vec<(Findable<Operator>, Unary)>,
 }
 
 impl Multiply {
     pub fn parse(mut token_reader: &mut TokenReader)
     -> Result<Multiply, (Option<Position>, String)> {
-        let mut multiply = match Primary::parse(&mut token_reader) {
-            Ok(first_primary) => Multiply {
-                head: first_primary,
+        let mut multiply = match Unary::parse(&mut token_reader) {
+            Ok(first_unary) => Multiply {
+                head: first_unary,
                 tail: Vec::new(),
             },
             Err(err) => return Err(err),
@@ -35,20 +35,20 @@ impl Multiply {
                 _ => break,
             };
             token_reader.skip();
-            let primary = match Primary::parse(&mut token_reader) {
-                Ok(primary) => primary,
+            let unary = match Unary::parse(&mut token_reader) {
+                Ok(unary) => unary,
                 Err(err) => return Err(err),
             };
-            multiply.tail.push((mul_or_div, primary));
+            multiply.tail.push((mul_or_div, unary));
         }
         Ok(multiply)
     }
 
-    pub fn head(&self) -> &Primary {
+    pub fn head(&self) -> &Unary {
         &self.head
     }
 
-    pub fn tail(&self) -> &Vec<(Findable<Operator>, Primary)> {
+    pub fn tail(&self) -> &Vec<(Findable<Operator>, Unary)> {
         &self.tail
     }
 }

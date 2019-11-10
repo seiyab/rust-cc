@@ -80,7 +80,6 @@ mod tests {
         let primary = Primary::parse(&mut token_reader).unwrap();
 
         if let Primary::Expression(expression) = primary {
-            assert_eq!(expression.tail().len(), 1);
         } else {
             panic!("Expressionになっていません。")
         }

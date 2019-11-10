@@ -18,10 +18,22 @@ impl Token {
     pub fn div() -> Token {
         Token::Operator(Operator::Div)
     }
-    pub fn left_round_bracket() -> Token {
+    pub const fn lt() -> Token {
+        Token::Operator(Operator::Less)
+    }
+    pub const fn gt() -> Token {
+        Token::Operator(Operator::Greater)
+    }
+    pub const fn le() -> Token {
+        Token::Operator(Operator::LessEq)
+    }
+    pub const fn ge() -> Token {
+        Token::Operator(Operator::GreaterEq)
+    }
+    pub const fn left_round_bracket() -> Token {
         Token::Bracket(BracketSide::Left(Bracket::Round))
     }
-    pub fn right_round_bracket() -> Token {
+    pub const fn right_round_bracket() -> Token {
         Token::Bracket(BracketSide::Right(Bracket::Round))
     }
 }
@@ -32,6 +44,10 @@ pub enum Operator {
     Sub,
     Mul,
     Div,
+    Less,
+    Greater,
+    LessEq,
+    GreaterEq,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]

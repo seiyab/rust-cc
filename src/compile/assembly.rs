@@ -6,7 +6,14 @@ pub enum Instruction {
     Imul(Register, Readable),
     Cqo,
     Idiv(Register),
+    Cmp(Register, Readable),
+    Sete(Register),
+    Setl(Register),
+    Setle(Register),
+    Setg(Register),
+    Setge(Register),
     Mov(Register, i64),
+    Movzb(Register, Readable),
     Ret,
 }
 
@@ -20,7 +27,14 @@ impl Instruction {
             &Instruction::Imul(acc, x) => format!("  imul {}, {}", acc.symbol(), x.symbol()),
             &Instruction::Cqo => format!("  cqo"),
             &Instruction::Idiv(register) => format!("  idiv {}", register.symbol()),
+            &Instruction::Cmp(register, x) => format!("  cmp {}, {}", register.symbol(), x.symbol()),
+            &Instruction::Sete(register) => format!("  sete {}", register.symbol()),
+            &Instruction::Setl(register) => format!("  setl {}", register.symbol()),
+            &Instruction::Setle(register) => format!("  setle {}", register.symbol()),
+            &Instruction::Setg(register) => format!("  setg {}", register.symbol()),
+            &Instruction::Setge(register) => format!("  setge {}", register.symbol()),
             &Instruction::Mov(register, x) => format!("  mov {}, {}", register.symbol(), x),
+            &Instruction::Movzb(register, x) => format!("  movzb {}, {}", register.symbol(), x.symbol()),
             &Instruction::Ret => format!("  ret"),
         }
     }
@@ -45,6 +59,7 @@ impl Readable {
 pub enum Register {
     Rax,
     Rdi,
+    Al,
 }
 
 impl Register {
@@ -52,6 +67,7 @@ impl Register {
         match &self {
             &Register::Rax => String::from("rax"),
             &Register::Rdi => String::from("rdi"),
+            &Register::Al => String::from("al"),
         }
     }
 }

@@ -18,6 +18,12 @@ impl Token {
     pub fn div() -> Token {
         Token::Operator(Operator::Div)
     }
+    pub const fn eq() -> Token {
+        Token::Operator(Operator::Equal)
+    }
+    pub const fn neq() -> Token {
+        Token::Operator(Operator::NotEqual)
+    }
     pub const fn lt() -> Token {
         Token::Operator(Operator::Less)
     }
@@ -44,6 +50,8 @@ pub enum Operator {
     Sub,
     Mul,
     Div,
+    Equal,
+    NotEqual,
     Less,
     Greater,
     LessEq,

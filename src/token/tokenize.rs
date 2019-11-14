@@ -43,6 +43,22 @@ pub fn tokenize(s: &String) -> Result<Vec<Findable<Token>>, usize> {
                         Token::gt()
                     }
                 },
+                '=' => {
+                    if src.chars().next() == Some('=') {
+                        src.drain(..1);
+                        Token::eq()
+                    } else {
+                        return Err(position + 1)
+                    }
+                },
+                '!' => {
+                    if src.chars().next() == Some('=') {
+                        src.drain(..1);
+                        Token::neq()
+                    } else {
+                        return Err(position + 1)
+                    }
+                },
                 _ => return Err(position),
             };
             tokens.push(Findable::new(

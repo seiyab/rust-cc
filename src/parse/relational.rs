@@ -1,4 +1,3 @@
-
 use sourcecode::Position;
 use sourcecode::Findable;
 

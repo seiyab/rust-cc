@@ -2,6 +2,7 @@ use token::Operator;
 
 use parse::SyntaxTree;
 use parse::Expression;
+use parse::Equality;
 use parse::Relational;
 use parse::Add;
 use parse::Multiply;
@@ -20,7 +21,25 @@ pub fn compile(syntaxtree: &SyntaxTree) -> Vec<Instruction> {
 }
 
 fn compile_expression(expression: &Expression) -> Vec<Instruction> {
-    compile_relational(expression.relational())
+    compile_equality(expression.equality())
+}
+
+fn compile_equality(equality: &Equality) -> Vec<Instruction> {
+    let mut instructions = compile_relational(equality.head());
+    for (findable_operator, relational) in equality.tail() {
+        instructions.append(&mut compile_relational(relational));
+        instructions.push(Instruction::Pop(Register::Rdi));
+        instructions.push(Instruction::Pop(Register::Rax));
+        instructions.push(Instruction::Cmp(Register::Rax, Readable::Register(Register::Rdi)));
+        let setx = match findable_operator.value() {
+            Operator::Equal => Instruction::Sete(Register::Al),
+            _ => Instruction::Setne(Register::Al),
+        };
+        instructions.push(setx);
+        instructions.push(Instruction::Movzb(Register::Rax, Readable::Register(Register::Al)));
+        instructions.push(Instruction::Push(Readable::Register(Register::Rax)));
+    }
+    instructions
 }
 
 fn compile_relational(relational: &Relational) -> Vec<Instruction> {

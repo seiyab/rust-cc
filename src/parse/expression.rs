@@ -2,20 +2,20 @@ use sourcecode::Position;
 
 use token::TokenReader;
 
-use parse::Relational;
+use parse::Equality;
 
 pub struct Expression {
-    relational: Relational,
+    equality: Equality,
 }
 
 impl Expression {
     pub fn parse(mut token_reader: &mut TokenReader)
     -> Result<Expression, (Option<Position>, String)> {
-        Relational::parse(&mut token_reader)
-        .map(|relational| Expression {relational})
+        Equality::parse(&mut token_reader)
+        .map(|equality| Expression {equality})
     }
 
-    pub fn relational(&self) -> &Relational {
-        &self.relational
+    pub fn equality(&self) -> &Equality {
+        &self.equality
     }
 }

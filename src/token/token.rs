@@ -72,7 +72,7 @@ pub enum Bracket {
     Round,
 }
 
-struct Dictionary {
+pub struct Dictionary {
     terminal: Option<Token>,
     next: HashMap<char, Box<Dictionary>>,
 }
@@ -132,6 +132,8 @@ impl Dictionary {
         string_to_token.insert(String::from(">="), Token::ge());
         string_to_token.insert(String::from("=="), Token::eq());
         string_to_token.insert(String::from("!="), Token::neq());
+        string_to_token.insert(String::from("("), Token::left_round_bracket());
+        string_to_token.insert(String::from(")"), Token::right_round_bracket());
 
         Dictionary::of(&string_to_token)
     }

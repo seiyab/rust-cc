@@ -2,8 +2,10 @@ use std::str::FromStr;
 use sourcecode::Position;
 use sourcecode::Findable;
 use token::token::Token;
+use token::token::Dictionary;
 
 pub fn tokenize(s: &String) -> Result<Vec<Findable<Token>>, usize> {
+    let dictionary = Dictionary::default();
     let mut src = s.clone();
     let mut tokens = Vec::new();
     let src_len = src.len() as i64;
@@ -19,47 +21,12 @@ pub fn tokenize(s: &String) -> Result<Vec<Findable<Token>>, usize> {
                 Position(position)
             ));
         } else {
-            src.drain(..1);
-            let token = match head {
-                '+' => Token::add(),
-                '-' => Token::sub(),
-                '*' => Token::mul(),
-                '/' => Token::div(),
-                '(' => Token::left_round_bracket(),
-                ')' => Token::right_round_bracket(),
-                '<' => {
-                    if src.chars().next() == Some('=') {
-                        src.drain(..1);
-                        Token::le()
-                    } else {
-                        Token::lt()
-                    }
-                },
-                '>' => {
-                    if src.chars().next() == Some('=') {
-                        src.drain(..1);
-                        Token::ge()
-                    } else {
-                        Token::gt()
-                    }
-                },
-                '=' => {
-                    if src.chars().next() == Some('=') {
-                        src.drain(..1);
-                        Token::eq()
-                    } else {
-                        return Err(position + 1)
-                    }
-                },
-                '!' => {
-                    if src.chars().next() == Some('=') {
-                        src.drain(..1);
-                        Token::neq()
-                    } else {
-                        return Err(position + 1)
-                    }
-                },
-                _ => return Err(position),
+            let token = match dictionary.longest_match(&src) {
+                None => return Err(position),
+                Some((token, length)) => {
+                    src.drain(..length);
+                    token
+                }
             };
             tokens.push(Findable::new(
                 token,

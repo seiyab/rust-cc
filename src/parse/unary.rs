@@ -4,6 +4,7 @@ use token::TokenReader;
 use token::Token;
 use token::Operator;
 
+use parse::SyntaxTree;
 use parse::Primary;
 
 pub enum Unary {
@@ -11,8 +12,8 @@ pub enum Unary {
     Negative(Primary),
 }
 
-impl Unary {
-    pub fn parse(token_reader: &mut TokenReader)
+impl SyntaxTree for Unary {
+    fn parse(token_reader: &mut TokenReader)
     -> Result<Unary, (Option<Position>, String)> {
         match token_reader.peek().map(|findable| findable.value()) {
             Some(Token::Operator(Operator::Add)) => {

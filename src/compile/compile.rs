@@ -1,6 +1,6 @@
 use token::Operator;
 
-use parse::SyntaxTree;
+use parse::Root;
 use parse::Expression;
 use parse::Equality;
 use parse::Relational;
@@ -13,7 +13,7 @@ use compile::assembly::Instruction;
 use compile::assembly::Register;
 use compile::assembly::Readable;
 
-pub fn compile(syntaxtree: &SyntaxTree) -> Vec<Instruction> {
+pub fn compile(syntaxtree: &Root) -> Vec<Instruction> {
     let mut instructions = compile_expression(syntaxtree.expression());
     instructions.push(Instruction::Pop(Register::Rax));
     instructions.push(Instruction::Ret);

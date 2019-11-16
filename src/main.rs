@@ -10,6 +10,7 @@ use token::tokenize;
 
 mod parse;
 use parse::SyntaxTree;
+use parse::Root;
 
 mod compile;
 use compile::compile;
@@ -35,8 +36,8 @@ fn main() {
     };
     let mut token_reader = TokenReader::new(&tokens);
 
-    let syntax_tree = match SyntaxTree::parse(&mut token_reader) {
-        Ok(st) => st,
+    let root = match Root::parse(&mut token_reader) {
+        Ok(root) => root,
         Err((Some(position), message)) => {
             point_error(&src, position.0, message.as_str());
             process::exit(1);
@@ -47,7 +48,7 @@ fn main() {
         },
     };
 
-    for instruction in compile(&syntax_tree) {
+    for instruction in compile(&root) {
         println!("{}", instruction.destination_code());
     }
 

@@ -5,6 +5,7 @@ use token::Token;
 use token::TokenReader;
 use token::Operator;
 
+use parse::SyntaxTree;
 use parse::Multiply;
 
 pub struct Add {
@@ -13,7 +14,17 @@ pub struct Add {
 }
 
 impl Add {
-    pub fn parse(mut token_reader: &mut TokenReader)
+    pub fn head(&self) -> &Multiply {
+        &self.head
+    }
+
+    pub fn tail(&self) -> &Vec<(Findable<Operator>, Multiply)> {
+        &self.tail
+    }
+}
+
+impl SyntaxTree for Add {
+    fn parse(mut token_reader: &mut TokenReader)
     -> Result<Add, (Option<Position>, String)> {
         let mut add = match Multiply::parse(&mut token_reader) {
             Ok(first_multiply) => Add {
@@ -37,14 +48,6 @@ impl Add {
             add.tail.push((add_or_sub, multiply));
         }
         Ok(add)
-    }
-
-    pub fn head(&self) -> &Multiply {
-        &self.head
-    }
-
-    pub fn tail(&self) -> &Vec<(Findable<Operator>, Multiply)> {
-        &self.tail
     }
 }
 

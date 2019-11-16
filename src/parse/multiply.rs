@@ -5,6 +5,7 @@ use token::Operator;
 use token::Token;
 use token::TokenReader;
 
+use parse::SyntaxTree;
 use parse::Unary;
 
 pub struct Multiply {
@@ -13,7 +14,17 @@ pub struct Multiply {
 }
 
 impl Multiply {
-    pub fn parse(mut token_reader: &mut TokenReader)
+    pub fn head(&self) -> &Unary {
+        &self.head
+    }
+
+    pub fn tail(&self) -> &Vec<(Findable<Operator>, Unary)> {
+        &self.tail
+    }
+}
+
+impl SyntaxTree for Multiply {
+    fn parse(mut token_reader: &mut TokenReader)
     -> Result<Multiply, (Option<Position>, String)> {
         let mut multiply = match Unary::parse(&mut token_reader) {
             Ok(first_unary) => Multiply {
@@ -42,14 +53,6 @@ impl Multiply {
             multiply.tail.push((mul_or_div, unary));
         }
         Ok(multiply)
-    }
-
-    pub fn head(&self) -> &Unary {
-        &self.head
-    }
-
-    pub fn tail(&self) -> &Vec<(Findable<Operator>, Unary)> {
-        &self.tail
     }
 }
 

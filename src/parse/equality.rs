@@ -5,6 +5,7 @@ use token::Operator;
 use token::Token;
 use token::TokenReader;
 
+use parse::SyntaxTree;
 use parse::Relational;
 
 pub struct Equality {
@@ -13,7 +14,24 @@ pub struct Equality {
 }
 
 impl Equality {
-    pub fn parse(mut token_reader: &mut TokenReader)
+    pub fn head(&self) -> &Relational {
+        &self.head
+    }
+
+    pub fn tail(&self) -> &Vec<(Findable<Operator>, Relational)> {
+        &self.tail
+    }
+
+    fn operators() -> Vec<Operator> {
+        vec![
+            Operator::Equal,
+            Operator::NotEqual,
+        ]
+    }
+}
+
+impl SyntaxTree for Equality {
+    fn parse(mut token_reader: &mut TokenReader)
     -> Result<Equality, (Option<Position>, String)> {
         let mut equality = match Relational::parse(&mut token_reader) {
             Ok(first_relational) => Equality {
@@ -37,20 +55,5 @@ impl Equality {
             equality.tail.push((operator, relational));
         }
         Ok(equality)
-    }
-
-    pub fn head(&self) -> &Relational {
-        &self.head
-    }
-
-    pub fn tail(&self) -> &Vec<(Findable<Operator>, Relational)> {
-        &self.tail
-    }
-
-    fn operators() -> Vec<Operator> {
-        vec![
-            Operator::Equal,
-            Operator::NotEqual,
-        ]
     }
 }

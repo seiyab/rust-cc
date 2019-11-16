@@ -1,4 +1,5 @@
 mod syntaxtree;
+mod root;
 mod expression;
 mod equality;
 mod relational;
@@ -7,6 +8,7 @@ mod multiply;
 mod unary;
 mod primary;
 pub use self::syntaxtree::SyntaxTree;
+pub use self::root::Root;
 pub use self::expression::Expression;
 pub use self::equality::Equality;
 pub use self::relational::Relational;

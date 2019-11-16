@@ -5,6 +5,7 @@ use token::Operator;
 use token::Token;
 use token::TokenReader;
 
+use parse::SyntaxTree;
 use parse::Add;
 
 pub struct Relational {
@@ -13,7 +14,26 @@ pub struct Relational {
 }
 
 impl Relational {
-    pub fn parse(mut token_reader: &mut TokenReader)
+    pub fn head(&self) -> &Add {
+        &self.head
+    }
+
+    pub fn tail(&self) -> &Vec<(Findable<Operator>, Add)> {
+        &self.tail
+    }
+
+    fn operators() -> Vec<Operator> {
+        vec![
+            Operator::Less,
+            Operator::LessEq,
+            Operator::Greater,
+            Operator::GreaterEq,
+        ]
+    }
+}
+
+impl SyntaxTree for Relational {
+    fn parse(mut token_reader: &mut TokenReader)
     -> Result<Relational, (Option<Position>, String)> {
         let mut relational = match Add::parse(&mut token_reader) {
             Ok(first_add) => Relational {
@@ -37,23 +57,6 @@ impl Relational {
             relational.tail.push((operator, add));
         }
         Ok(relational)
-    }
-
-    pub fn head(&self) -> &Add {
-        &self.head
-    }
-
-    pub fn tail(&self) -> &Vec<(Findable<Operator>, Add)> {
-        &self.tail
-    }
-
-    fn operators() -> Vec<Operator> {
-        vec![
-            Operator::Less,
-            Operator::LessEq,
-            Operator::Greater,
-            Operator::GreaterEq,
-        ]
     }
 }
 

@@ -22,7 +22,7 @@ pub fn tokenize(s: &String) -> Result<Vec<Findable<Token>>, usize> {
             ));
         } else {
             let token = match dictionary.longest_match(&src) {
-                None => { println!("{}", src); return Err(position)},
+                None => return Err(position),
                 Some((token, length)) => {
                     src.drain(..length);
                     token

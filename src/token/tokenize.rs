@@ -27,6 +27,38 @@ pub fn tokenize(s: &String) -> Result<Vec<Findable<Token>>, usize> {
                 '/' => Token::div(),
                 '(' => Token::left_round_bracket(),
                 ')' => Token::right_round_bracket(),
+                '<' => {
+                    if src.chars().next() == Some('=') {
+                        src.drain(..1);
+                        Token::le()
+                    } else {
+                        Token::lt()
+                    }
+                },
+                '>' => {
+                    if src.chars().next() == Some('=') {
+                        src.drain(..1);
+                        Token::ge()
+                    } else {
+                        Token::gt()
+                    }
+                },
+                '=' => {
+                    if src.chars().next() == Some('=') {
+                        src.drain(..1);
+                        Token::eq()
+                    } else {
+                        return Err(position + 1)
+                    }
+                },
+                '!' => {
+                    if src.chars().next() == Some('=') {
+                        src.drain(..1);
+                        Token::neq()
+                    } else {
+                        return Err(position + 1)
+                    }
+                },
                 _ => return Err(position),
             };
             tokens.push(Findable::new(
@@ -114,6 +146,23 @@ mod tests {
         assert_eq!(findable_tokens[6].position(), Position(13));
 
         assert_eq!(findable_tokens.len(), 7);
+    }
+
+    #[test]
+    fn test_tokenize_relational() {
+        let src = String::from("1 <= 3");
+
+        let findable_tokens = tokenize(&src).unwrap();
+
+        assert_eq!(findable_tokens[0].value(), &Token::Number(1));
+        assert_eq!(findable_tokens[0].position(), Position(0));
+
+        assert_eq!(findable_tokens[1].value(), &Token::le());
+        assert_eq!(findable_tokens[1].position(), Position(2));
+
+        assert_eq!(findable_tokens[2].value(), &Token::Number(3));
+        assert_eq!(findable_tokens[2].position(), Position(5));
+
     }
 
     #[test]

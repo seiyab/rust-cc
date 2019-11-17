@@ -47,7 +47,7 @@ impl Token {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Hash, Eq)]
 pub enum Operator {
     Add,
     Sub,

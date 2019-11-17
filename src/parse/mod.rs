@@ -1,4 +1,5 @@
 mod syntaxtree;
+mod binary_operation;
 mod root;
 mod expression;
 mod equality;
@@ -8,6 +9,7 @@ mod multiply;
 mod unary;
 mod primary;
 pub use self::syntaxtree::SyntaxTree;
+pub use self::binary_operation::BinaryOperation;
 pub use self::root::Root;
 pub use self::expression::Expression;
 pub use self::equality::Equality;

@@ -66,12 +66,12 @@ fn compile_add(add: &Add) -> Vec<Instruction> {
     let mut instructions = Vec::new();
     let head = add.head();
     instructions.append(&mut compile_multiply(head));
-    for (findable_operator, multiply) in add.tail() {
+    for (operator, multiply) in add.tail() {
         instructions.append(&mut compile_multiply(multiply));
         instructions.push(Instruction::Pop(Register::Rdi));
         instructions.push(Instruction::Pop(Register::Rax));
-        match findable_operator.value() {
-            &Operator::Add => instructions.push(Instruction::Add(Register::Rax, Readable::Register(Register::Rdi))),
+        match operator {
+            Operator::Add => instructions.push(Instruction::Add(Register::Rax, Readable::Register(Register::Rdi))),
             _ => instructions.push(Instruction::Sub(Register::Rax, Readable::Register(Register::Rdi))),
         }
         instructions.push(Instruction::Push(Readable::Register(Register::Rax)));

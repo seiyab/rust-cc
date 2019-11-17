@@ -1,3 +1,6 @@
+use std::collections::HashSet;
+use std::iter::FromIterator;
+
 use sourcecode::Position;
 use sourcecode::Findable;
 
@@ -6,48 +9,29 @@ use token::TokenReader;
 use token::Operator;
 
 use parse::SyntaxTree;
+use parse::BinaryOperation;
 use parse::Multiply;
 
 pub struct Add {
-    head: Multiply,
-    tail: Vec<(Findable<Operator>, Multiply)>,
+    binary_operation: BinaryOperation<Multiply>,
 }
 
 impl Add {
     pub fn head(&self) -> &Multiply {
-        &self.head
+        self.binary_operation.head()
     }
 
-    pub fn tail(&self) -> &Vec<(Findable<Operator>, Multiply)> {
-        &self.tail
+    pub fn tail(&self) -> impl Iterator<Item = (Operator, &Multiply)> {
+        self.binary_operation.tail()
     }
 }
 
 impl SyntaxTree for Add {
     fn parse(mut token_reader: &mut TokenReader)
     -> Result<Add, (Option<Position>, String)> {
-        let mut add = match Multiply::parse(&mut token_reader) {
-            Ok(first_multiply) => Add {
-                head: first_multiply,
-                tail: Vec::new(),
-            },
-            Err(err) => return Err(err),
-        };
-        while let Some(findable_token) = token_reader.peek() {
-            let token = findable_token.value();
-            let add_or_sub = match token {
-                &Token::Operator(Operator::Add) => findable_token.map(|_| Operator::Add),
-                &Token::Operator(Operator::Sub) => findable_token.map(|_| Operator::Sub),
-                _ => break,
-            };
-            token_reader.skip();
-            let multiply = match Multiply::parse(&mut token_reader) {
-                Ok(multiply) => multiply,
-                Err(err) => return Err(err),
-            };
-            add.tail.push((add_or_sub, multiply));
-        }
-        Ok(add)
+        let operators = HashSet::from_iter(vec![Operator::Add, Operator::Sub].into_iter());
+        BinaryOperation::parse(&mut token_reader, &operators)
+        .map(|binary_operation| Add {binary_operation})
     }
 }
 
@@ -69,8 +53,9 @@ mod tests {
         let mut token_reader = TokenReader::new(&findable_tokens);
 
         let add = Add::parse(&mut token_reader).unwrap();
+        let mut tail = add.tail();
 
-        assert_eq!(add.tail[0].0.value(), &Operator::Add);
-        assert_eq!(add.tail[1].0.value(), &Operator::Sub);
+        assert_eq!(tail.next().unwrap().0, Operator::Add);
+        assert_eq!(tail.next().unwrap().0, Operator::Sub);
     }
 }

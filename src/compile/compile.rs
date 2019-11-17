@@ -1,6 +1,6 @@
 use token::Operator;
 
-use parse::SyntaxTree;
+use parse::Root;
 use parse::Expression;
 use parse::Equality;
 use parse::Relational;
@@ -13,7 +13,7 @@ use compile::assembly::Instruction;
 use compile::assembly::Register;
 use compile::assembly::Readable;
 
-pub fn compile(syntaxtree: &SyntaxTree) -> Vec<Instruction> {
+pub fn compile(syntaxtree: &Root) -> Vec<Instruction> {
     let mut instructions = compile_expression(syntaxtree.expression());
     instructions.push(Instruction::Pop(Register::Rax));
     instructions.push(Instruction::Ret);
@@ -26,12 +26,12 @@ fn compile_expression(expression: &Expression) -> Vec<Instruction> {
 
 fn compile_equality(equality: &Equality) -> Vec<Instruction> {
     let mut instructions = compile_relational(equality.head());
-    for (findable_operator, relational) in equality.tail() {
+    for (operator, relational) in equality.tail() {
         instructions.append(&mut compile_relational(relational));
         instructions.push(Instruction::Pop(Register::Rdi));
         instructions.push(Instruction::Pop(Register::Rax));
         instructions.push(Instruction::Cmp(Register::Rax, Readable::Register(Register::Rdi)));
-        let setx = match findable_operator.value() {
+        let setx = match operator {
             Operator::Equal => Instruction::Sete(Register::Al),
             _ => Instruction::Setne(Register::Al),
         };
@@ -44,12 +44,12 @@ fn compile_equality(equality: &Equality) -> Vec<Instruction> {
 
 fn compile_relational(relational: &Relational) -> Vec<Instruction> {
     let mut instructions = compile_add(relational.head());
-    for (findable_operator, add) in relational.tail() {
+    for (operator, add) in relational.tail() {
         instructions.append(&mut compile_add(add));
         instructions.push(Instruction::Pop(Register::Rdi));
         instructions.push(Instruction::Pop(Register::Rax));
         instructions.push(Instruction::Cmp(Register::Rax, Readable::Register(Register::Rdi)));
-        let setx = match findable_operator.value() {
+        let setx = match operator {
             Operator::Less => Instruction::Setl(Register::Al),
             Operator::LessEq => Instruction::Setle(Register::Al),
             Operator::Greater => Instruction::Setg(Register::Al),
@@ -66,12 +66,12 @@ fn compile_add(add: &Add) -> Vec<Instruction> {
     let mut instructions = Vec::new();
     let head = add.head();
     instructions.append(&mut compile_multiply(head));
-    for (findable_operator, multiply) in add.tail() {
+    for (operator, multiply) in add.tail() {
         instructions.append(&mut compile_multiply(multiply));
         instructions.push(Instruction::Pop(Register::Rdi));
         instructions.push(Instruction::Pop(Register::Rax));
-        match findable_operator.value() {
-            &Operator::Add => instructions.push(Instruction::Add(Register::Rax, Readable::Register(Register::Rdi))),
+        match operator {
+            Operator::Add => instructions.push(Instruction::Add(Register::Rax, Readable::Register(Register::Rdi))),
             _ => instructions.push(Instruction::Sub(Register::Rax, Readable::Register(Register::Rdi))),
         }
         instructions.push(Instruction::Push(Readable::Register(Register::Rax)));
@@ -83,12 +83,12 @@ fn compile_multiply(multiply: &Multiply) -> Vec<Instruction> {
     let mut instructions = Vec::new();
     let head = multiply.head();
     instructions.append(&mut compile_unary(head));
-    for (findable_operator, unary) in multiply.tail() {
+    for (operator, unary) in multiply.tail() {
         instructions.append(&mut compile_unary(unary));
         instructions.push(Instruction::Pop(Register::Rdi));
         instructions.push(Instruction::Pop(Register::Rax));
-        match findable_operator.value() {
-            &Operator::Mul => instructions.push(Instruction::Imul(Register::Rax, Readable::Register(Register::Rdi))),
+        match operator {
+            Operator::Mul => instructions.push(Instruction::Imul(Register::Rax, Readable::Register(Register::Rdi))),
             _ => {
                 instructions.push(Instruction::Cqo);
                 instructions.push(Instruction::Idiv(Register::Rdi));

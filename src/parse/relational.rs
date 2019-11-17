@@ -1,65 +1,51 @@
+use std::collections::HashSet;
+use std::iter::FromIterator;
+
 use sourcecode::Position;
-use sourcecode::Findable;
 
 use token::Operator;
-use token::Token;
 use token::TokenReader;
 
+use parse::SyntaxTree;
+use parse::BinaryOperation;
 use parse::Add;
 
 pub struct Relational {
-    pub head: Add,
-    pub tail: Vec<(Findable<Operator>, Add)>,
+    binary_operation: BinaryOperation<Add>,
 }
 
 impl Relational {
-    pub fn parse(mut token_reader: &mut TokenReader)
-    -> Result<Relational, (Option<Position>, String)> {
-        let mut relational = match Add::parse(&mut token_reader) {
-            Ok(first_add) => Relational {
-                head: first_add,
-                tail: Vec::new(),
-            },
-            Err(e) => return Err(e),
-        };
-        while let Some(findable_token) = token_reader.peek() {
-            let token = findable_token.value();
-            let rel_ops = Relational::operators();
-            let operator = match token {
-                &Token::Operator(op) if rel_ops.contains(&op) => findable_token.map(|_| op),
-                _ => break,
-            };
-            token_reader.skip();
-            let add = match Add::parse(&mut token_reader) {
-                Ok(add) => add,
-                Err(e) => return Err(e),
-            };
-            relational.tail.push((operator, add));
-        }
-        Ok(relational)
-    }
-
     pub fn head(&self) -> &Add {
-        &self.head
+        self.binary_operation.head()
     }
 
-    pub fn tail(&self) -> &Vec<(Findable<Operator>, Add)> {
-        &self.tail
+    pub fn tail(&self) -> impl Iterator<Item = (Operator, &Add)> {
+        self.binary_operation.tail()
     }
 
-    fn operators() -> Vec<Operator> {
-        vec![
+    fn operators() -> HashSet<Operator> {
+        HashSet::from_iter(vec![
             Operator::Less,
             Operator::LessEq,
             Operator::Greater,
             Operator::GreaterEq,
-        ]
+        ].into_iter())
+    }
+}
+
+impl SyntaxTree for Relational {
+    fn parse(mut token_reader: &mut TokenReader)
+    -> Result<Relational, (Option<Position>, String)> {
+        BinaryOperation::parse(&mut token_reader, &Self::operators())
+        .map(|binary_operation| Relational {binary_operation})
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sourcecode::Findable;
+    use token::Token;
 
     #[test]
     fn test_parse_relational() {
@@ -74,8 +60,9 @@ mod tests {
         let mut token_reader = TokenReader::new(&findable_tokens);
 
         let relational = Relational::parse(&mut token_reader).unwrap();
+        let mut tail = relational.tail();
 
-        assert_eq!(relational.tail[0].0.value(), &Operator::Less);
-        assert_eq!(relational.tail[1].0.value(), &Operator::LessEq);
+        assert_eq!(tail.next().unwrap().0, Operator::Less);
+        assert_eq!(tail.next().unwrap().0, Operator::LessEq);
     }
 }

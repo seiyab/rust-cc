@@ -5,6 +5,7 @@ use token::Bracket;
 use token::Token;
 use token::TokenReader;
 
+use parse::SyntaxTree;
 use parse::Expression;
 
 pub enum Primary {
@@ -13,19 +14,6 @@ pub enum Primary {
 }
 
 impl Primary {
-    pub fn parse(mut token_reader: &mut TokenReader)
-    -> Result<Primary, (Option<Position>, String)> {
-        let first_findable_token = match token_reader.next() {
-            Some(findable_token) => findable_token,
-            None => return Err((None, String::from("式を期待していましたが、トークンがありませんでした。"))),
-        };
-        match first_findable_token.value() {
-            &Token::Number(number) => Ok(Primary::Integer(number)),
-            &Token::Bracket(BracketSide::Left(Bracket::Round)) => Self::parse_round_bracket(&mut token_reader),
-            _ => Err((Some(first_findable_token.position()), String::from("数字または\"(\"を期待しています。"))),
-        }
-    }
-
     fn parse_round_bracket(token_reader: &mut TokenReader)
     -> Result<Primary, (Option<Position>, String)> {
         let expression = match Expression::parse(token_reader) {
@@ -39,6 +27,21 @@ impl Primary {
         match &maybe_left_round_bracket.value() {
             &Token::Bracket(BracketSide::Right(Bracket::Round)) => Ok(Primary::Expression(Box::new(expression))),
             _ => Err((Some(maybe_left_round_bracket.position()), String::from("\")\"を期待しています。"))),
+        }
+    }
+}
+
+impl SyntaxTree for Primary {
+    fn parse(mut token_reader: &mut TokenReader)
+    -> Result<Primary, (Option<Position>, String)> {
+        let first_findable_token = match token_reader.next() {
+            Some(findable_token) => findable_token,
+            None => return Err((None, String::from("式を期待していましたが、トークンがありませんでした。"))),
+        };
+        match first_findable_token.value() {
+            &Token::Number(number) => Ok(Primary::Integer(number)),
+            &Token::Bracket(BracketSide::Left(Bracket::Round)) => Self::parse_round_bracket(&mut token_reader),
+            _ => Err((Some(first_findable_token.position()), String::from("数字または\"(\"を期待しています。"))),
         }
     }
 }
@@ -79,7 +82,7 @@ mod tests {
 
         let primary = Primary::parse(&mut token_reader).unwrap();
 
-        if let Primary::Expression(expression) = primary {
+        if let Primary::Expression(_expression) = primary {
         } else {
             panic!("Expressionになっていません。")
         }

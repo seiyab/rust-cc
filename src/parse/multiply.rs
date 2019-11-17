@@ -1,61 +1,43 @@
+use std::collections::HashSet;
+use std::iter::FromIterator;
+
 use sourcecode::Position;
-use sourcecode::Findable;
 
 use token::Operator;
-use token::Token;
 use token::TokenReader;
 
+use parse::SyntaxTree;
+use parse::BinaryOperation;
 use parse::Unary;
 
 pub struct Multiply {
-    pub head: Unary,
-    pub tail: Vec<(Findable<Operator>, Unary)>,
+    binary_operation: BinaryOperation<Unary>,
 }
 
 impl Multiply {
-    pub fn parse(mut token_reader: &mut TokenReader)
-    -> Result<Multiply, (Option<Position>, String)> {
-        let mut multiply = match Unary::parse(&mut token_reader) {
-            Ok(first_unary) => Multiply {
-                head: first_unary,
-                tail: Vec::new(),
-            },
-            Err(err) => return Err(err),
-        };
-        while let Some(findable_token) = token_reader.peek() {
-            let token = findable_token.value();
-            let operator = match token {
-                &Token::Operator(Operator::Mul) => Operator::Mul,
-                &Token::Operator(Operator::Div) => Operator::Div,
-                _ => break,
-            };
-            let mul_or_div = match operator {
-                Operator::Mul => Findable::new(operator, findable_token.position()),
-                Operator::Div => Findable::new(operator, findable_token.position()),
-                _ => break,
-            };
-            token_reader.skip();
-            let unary = match Unary::parse(&mut token_reader) {
-                Ok(unary) => unary,
-                Err(err) => return Err(err),
-            };
-            multiply.tail.push((mul_or_div, unary));
-        }
-        Ok(multiply)
-    }
-
     pub fn head(&self) -> &Unary {
-        &self.head
+        self.binary_operation.head()
     }
 
-    pub fn tail(&self) -> &Vec<(Findable<Operator>, Unary)> {
-        &self.tail
+    pub fn tail(&self) -> impl Iterator<Item = (Operator, &Unary)> {
+        self.binary_operation.tail()
+    }
+}
+
+impl SyntaxTree for Multiply {
+    fn parse(mut token_reader: &mut TokenReader)
+    -> Result<Multiply, (Option<Position>, String)> {
+        let operators = HashSet::from_iter(vec![Operator::Mul, Operator::Div].into_iter());
+        BinaryOperation::parse(&mut token_reader, &operators)
+        .map(|binary_operation| Multiply {binary_operation})
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sourcecode::Findable;
+    use token::Token;
 
     #[test]
     fn test_parse_multiply() {
@@ -70,8 +52,9 @@ mod tests {
         let mut token_reader = TokenReader::new(&findable_tokens);
 
         let multiply = Multiply::parse(&mut token_reader).unwrap();
+        let mut tail = multiply.tail();
 
-        assert_eq!(multiply.tail[0].0.value(), &Operator::Mul);
-        assert_eq!(multiply.tail[1].0.value(), &Operator::Div);
+        assert_eq!(tail.next().unwrap().0, Operator::Mul);
+        assert_eq!(tail.next().unwrap().0, Operator::Div);
     }
 }

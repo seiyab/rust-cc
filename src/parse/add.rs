@@ -2,9 +2,7 @@ use std::collections::HashSet;
 use std::iter::FromIterator;
 
 use sourcecode::Position;
-use sourcecode::Findable;
 
-use token::Token;
 use token::TokenReader;
 use token::Operator;
 
@@ -39,6 +37,8 @@ impl SyntaxTree for Add {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sourcecode::Findable;
+    use token::Token;
 
     #[test]
     fn test_parse_add() {

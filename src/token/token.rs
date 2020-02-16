@@ -4,8 +4,11 @@ use std::str::Chars;
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     Operator(Operator),
+    ReservedWord(ReservedWord),
     Number(i64),
-    Bracket(BracketSide)
+    Bracket(BracketSide),
+    Identifier(String),
+    Eol,
 }
 
 impl Token {
@@ -39,11 +42,20 @@ impl Token {
     pub const fn ge() -> Token {
         Token::Operator(Operator::GreaterEq)
     }
+    pub const fn assign() -> Token {
+        Token::Operator(Operator::Assign)
+    }
     pub const fn left_round_bracket() -> Token {
         Token::Bracket(BracketSide::Left(Bracket::Round))
     }
     pub const fn right_round_bracket() -> Token {
         Token::Bracket(BracketSide::Right(Bracket::Round))
+    }
+    pub const fn let_() -> Token {
+        Token::ReservedWord(ReservedWord::Let)
+    }
+    pub const fn return_() -> Token {
+        Token::ReservedWord(ReservedWord::Return)
     }
 }
 
@@ -59,6 +71,13 @@ pub enum Operator {
     Greater,
     LessEq,
     GreaterEq,
+    Assign,
+}
+
+#[derive(Debug, PartialEq, Clone, Copy, Hash, Eq)]
+pub enum ReservedWord {
+    Let,
+    Return,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -134,6 +153,7 @@ impl Dictionary {
         string_to_token.insert(String::from("!="), Token::neq());
         string_to_token.insert(String::from("("), Token::left_round_bracket());
         string_to_token.insert(String::from(")"), Token::right_round_bracket());
+        string_to_token.insert(String::from(":="), Token::assign());
 
         Dictionary::of(&string_to_token)
     }

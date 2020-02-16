@@ -23,8 +23,9 @@ fn main() {
     }
 
     println!(".intel_syntax noprefix");
-    println!(".global main");
-    println!("main:");
+    println!(".global _main");
+    println!("");
+    println!("_main:");
 
     let src = args[1].clone();
     let tokens = match tokenize(&src) {

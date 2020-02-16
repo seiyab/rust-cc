@@ -10,6 +10,7 @@ use parse::Expression;
 
 pub enum Primary {
     Integer(i64),
+    Identifier(String),
     Expression(Box<Expression>),
 }
 
@@ -40,8 +41,9 @@ impl SyntaxTree for Primary {
         };
         match first_findable_token.value() {
             &Token::Number(number) => Ok(Primary::Integer(number)),
+            Token::Identifier(name) => Ok(Primary::Identifier(name.clone())),
             &Token::Bracket(BracketSide::Left(Bracket::Round)) => Self::parse_round_bracket(&mut token_reader),
-            _ => Err((Some(first_findable_token.position()), String::from("数字または\"(\"を期待しています。"))),
+            _ => Err((Some(first_findable_token.position()), String::from("数字または識別子または\"(\"を期待しています。"))),
         }
     }
 }

@@ -2,6 +2,8 @@ use std::str::FromStr;
 use sourcecode::Position;
 use sourcecode::Findable;
 use token::token::Token;
+use token::token::Operator;
+use token::token::ReservedWord;
 use token::token::Dictionary;
 
 pub fn tokenize(s: &String) -> Result<Vec<Findable<Token>>, usize> {
@@ -12,7 +14,7 @@ pub fn tokenize(s: &String) -> Result<Vec<Findable<Token>>, usize> {
     while let Some(head) = src.chars().next() {
         let remaining = src.len() as i64;
         let position = (src_len - remaining) as usize;
-        if head==' ' {
+        if head==' ' || head=='\n' {
             src.drain(..1);
         } else if head.is_digit(10) {
             let n = drain_number(&mut src).unwrap();
@@ -20,6 +22,16 @@ pub fn tokenize(s: &String) -> Result<Vec<Findable<Token>>, usize> {
                 Token::Number(n),
                 Position(position)
             ));
+        } else if head.is_alphabetic() {
+            let word = drain_word(&mut src);
+            tokens.push(Findable::new(
+                match word.as_str() {
+                    "let" => Token::let_(),
+                    "return" => Token::return_(),
+                    w => Token::Identifier(String::from(w)),
+                },
+                Position(position)
+            ))
         } else {
             let token = match dictionary.longest_match(&src) {
                 None => return Err(position),
@@ -43,6 +55,11 @@ fn drain_number(src: &mut String) -> Result<i64, <i64 as FromStr>::Err> {
     digit_str.parse::<i64>()
 }
 
+fn drain_word(src: &mut String) -> String {
+    let offset = src.find(|c: char| !c.is_alphabetic()).unwrap_or(src.len());
+    return src.drain(..offset).collect();
+}
+
 pub struct TokenReader<'a> {
     tokens: &'a Vec<Findable<Token>>,
     needle: usize,
@@ -52,7 +69,7 @@ impl<'a> Iterator for TokenReader<'a> {
     type Item = &'a Findable<Token>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if &self.needle < &self.tokens.len() {
+        if self.has_next() {
             let ret = Some(&self.tokens[self.needle]);
             self.needle = self.needle + 1;
             ret
@@ -67,6 +84,10 @@ impl TokenReader<'_> {
         TokenReader { tokens: tokens, needle: 0 }
     }
 
+    pub fn has_next(&self) -> bool {
+        return self.needle < self.tokens.len()
+    }
+
     pub fn peek(&self) -> Option<&Findable<Token>> {
         if &self.needle < &self.tokens.len() {
             Some(&self.tokens[self.needle])
@@ -77,6 +98,40 @@ impl TokenReader<'_> {
 
     pub fn skip(&mut self) {
         self.needle += 1;
+    }
+
+    pub fn consume_reserved_word(&mut self, expected_word: ReservedWord)
+    -> Result<ReservedWord, Option<Position>> {
+        self.peek().ok_or(None)
+        .map(|findable| findable.map(|token| token.clone()))
+        .and_then(|token| match token.value() {
+            Token::ReservedWord(actual_word) =>
+                if *actual_word==expected_word { self.skip(); Ok(*actual_word) }
+                else { Err(Some(token.position())) }
+            _ => Err(None),
+        })
+    }
+
+    pub fn consume_identifier(&mut self)
+    -> Result<String, Option<Position>> {
+        self.peek().ok_or(None)
+        .map(|findable| findable.map(|token| token.clone()))
+        .and_then(|token| match token.value() {
+            Token::Identifier(name) => { self.skip(); Ok(name.clone()) },
+            _ => Err(Some(token.position())),
+        })
+    }
+
+    pub fn consume_operator(&mut self, expected_operator: Operator)
+    -> Result<Operator, Option<Position>> {
+        self.peek().ok_or(None)
+        .map(|findable| findable.map(|token| token.clone()))
+        .and_then(|token| match token.value() {
+            Token::Operator(actual_operator) => 
+                if *actual_operator == expected_operator { self.skip(); Ok(*actual_operator) }
+                else { Err(Some(token.position())) },
+            _ => Err(Some(token.position())),
+        })
     }
 }
 

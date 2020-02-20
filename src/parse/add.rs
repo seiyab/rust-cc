@@ -44,11 +44,11 @@ mod tests {
     fn test_parse_add() {
         // 3+5-1
         let findable_tokens = vec![
-            Findable::new(Token::Number(3), Position(0)),
-            Findable::new(Token::add(), Position(1)),
-            Findable::new(Token::Number(5), Position(2)),
-            Findable::new(Token::sub(), Position(3)),
-            Findable::new(Token::Number(1), Position(4)),
+            Findable::new(Token::Number(3), Position::new(0, 0)),
+            Findable::new(Token::add(), Position::new(0, 1)),
+            Findable::new(Token::Number(5), Position::new(0, 2)),
+            Findable::new(Token::sub(), Position::new(0, 3)),
+            Findable::new(Token::Number(1), Position::new(0, 4)),
         ];
         let mut token_reader = TokenReader::new(&findable_tokens);
 

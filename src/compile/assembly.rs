@@ -56,21 +56,6 @@ pub trait Writable {
     fn write_symbol(&self) -> String;
 }
 
-//#[derive(Debug, Clone, Copy)]
-//pub enum Readable {
-//    Register(Register),
-//    Integer(i64)
-//}
-//
-//impl Readable {
-//    fn symbol(&self) -> String {
-//        match &self {
-//            &Readable::Register(register) => register.symbol(),
-//            &Readable::Integer(i) => i.to_string(),
-//        }
-//    }
-//}
-
 #[derive(Debug, Clone, Copy)]
 pub enum Register {
     Rax,

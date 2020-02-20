@@ -39,8 +39,8 @@ mod tests {
     fn test_parse_positive() {
         // +3
         let findable_tokens = vec![
-            Findable::new(Token::add(), Position(0)),
-            Findable::new(Token::Number(3), Position(1)),
+            Findable::new(Token::add(), Position::new(0, 0)),
+            Findable::new(Token::Number(3), Position::new(0, 1)),
         ];
         let mut token_reader = TokenReader::new(&findable_tokens);
 
@@ -56,7 +56,7 @@ mod tests {
     fn test_parse_implicit_positive() {
         // 6
         let findable_tokens = vec![
-            Findable::new(Token::Number(6), Position(0)),
+            Findable::new(Token::Number(6), Position::new(0, 0)),
         ];
         let mut token_reader = TokenReader::new(&findable_tokens);
 
@@ -72,8 +72,8 @@ mod tests {
     fn test_parse_negative() {
         // -5
         let findable_tokens = vec![
-            Findable::new(Token::sub(), Position(0)),
-            Findable::new(Token::Number(5), Position(1)),
+            Findable::new(Token::sub(), Position::new(0, 0)),
+            Findable::new(Token::Number(5), Position::new(0, 1)),
         ];
         let mut token_reader = TokenReader::new(&findable_tokens);
 

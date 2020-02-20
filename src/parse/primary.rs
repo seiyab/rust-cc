@@ -57,7 +57,7 @@ mod tests {
     fn test_parse_integer() {
         // 10
         let findable_tokens = vec![
-            Findable::new(Token::Number(10), Position(0)),
+            Findable::new(Token::Number(10), Position::new(0, 0)),
         ];
         let mut token_reader = TokenReader::new(&findable_tokens);
 
@@ -74,11 +74,11 @@ mod tests {
     fn test_parse_round_bracket() {
         // (4+3)
         let findable_tokens = vec![
-            Findable::new(Token::left_round_bracket(), Position(0)),
-            Findable::new(Token::Number(4), Position(1)),
-            Findable::new(Token::add(), Position(2)),
-            Findable::new(Token::Number(3), Position(3)),
-            Findable::new(Token::right_round_bracket(), Position(4)),
+            Findable::new(Token::left_round_bracket(), Position::new(0, 0)),
+            Findable::new(Token::Number(4), Position::new(0, 1)),
+            Findable::new(Token::add(), Position::new(0, 2)),
+            Findable::new(Token::Number(3), Position::new(0, 3)),
+            Findable::new(Token::right_round_bracket(), Position::new(0, 4)),
         ];
         let mut token_reader = TokenReader::new(&findable_tokens);
 

@@ -2,7 +2,11 @@ use std::env;
 use std::io::{self, Write};
 use std::process;
 
+mod general;
+
 mod sourcecode;
+
+use sourcecode::Position;
 
 mod token;
 use token::TokenReader;
@@ -35,12 +39,13 @@ fn main() {
             process::exit(1);
         }
     };
+
     let mut token_reader = TokenReader::new(&tokens);
 
     let root = match Root::parse(&mut token_reader) {
         Ok(root) => root,
         Err((Some(position), message)) => {
-            point_error(&src, position.0, message.as_str());
+            point_error(&src, position, message.as_str());
             process::exit(1);
         },
         Err((None, message)) => {
@@ -63,8 +68,8 @@ fn log_error(s: &str) {
     let _ = errhandle.write_all(String::from(format!("{}\n", s)).as_bytes());
 }
 
-fn point_error(src: &String, position: usize, message: &str) {
-    log_error(src);
-    log_error(format!("{}^{}", " ".to_string().repeat(position).as_str(), message).as_str());
+fn point_error(src: &String, position: Position, message: &str) {
+    log_error(src.as_str().split("\n").nth(position.line()).unwrap());
+    log_error(format!("{}^{}", " ".to_string().repeat(position.pos()).as_str(), message).as_str());
 }
 

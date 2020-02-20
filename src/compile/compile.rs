@@ -25,8 +25,6 @@ pub fn compile(syntaxtree: &Root) -> Vec<Instruction> {
     instructions.append(&mut processes);
     instructions.push(Instruction::Pop(Register::Rax));
     instructions.append(&mut scope.epilogue());
-    //instructions.push(Instruction::Pop(Register::Rax));
-    //instructions.push(Instruction::Ret);
     instructions
 }
 

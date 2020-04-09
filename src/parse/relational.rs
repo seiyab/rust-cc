@@ -1,7 +1,8 @@
 use std::collections::HashSet;
 use std::iter::FromIterator;
 
-use sourcecode::Position;
+use sourcecode::Code;
+use sourcecode::Span;
 
 use token::Operator;
 use token::TokenReader;
@@ -19,7 +20,7 @@ impl Relational {
         self.binary_operation.head()
     }
 
-    pub fn tail(&self) -> impl Iterator<Item = (Operator, &Add)> {
+    pub fn tail(&self) -> impl Iterator<Item = (&Code<Operator>, &Add)> {
         self.binary_operation.tail()
     }
 
@@ -35,34 +36,31 @@ impl Relational {
 
 impl SyntaxTree for Relational {
     fn parse(mut token_reader: &mut TokenReader)
-    -> Result<Relational, (Option<Position>, String)> {
+    -> Result<Relational, (Option<Span>, String)> {
         BinaryOperation::parse(&mut token_reader, &Self::operators())
         .map(|binary_operation| Relational {binary_operation})
+    }
+
+    fn span(&self) -> Span {
+        self.binary_operation.span()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sourcecode::Findable;
-    use token::Token;
+    use token::tokenize;
 
     #[test]
     fn test_parse_relational() {
-        // 3 < 5 <= 1
-        let findable_tokens = vec![
-            Findable::new(Token::Number(3), Position::new(0, 0)),
-            Findable::new(Token::lt(), Position::new(0, 1)),
-            Findable::new(Token::Number(5), Position::new(0, 2)),
-            Findable::new(Token::le(), Position::new(0, 3)),
-            Findable::new(Token::Number(1), Position::new(0, 4)),
-        ];
-        let mut token_reader = TokenReader::new(&findable_tokens);
+        let src = "3 < 5 <= 1";
+        let tokens = tokenize(&src.to_string()).unwrap();
+        let mut token_reader = TokenReader::new(&tokens);
 
         let relational = Relational::parse(&mut token_reader).unwrap();
         let mut tail = relational.tail();
 
-        assert_eq!(tail.next().unwrap().0, Operator::Less);
-        assert_eq!(tail.next().unwrap().0, Operator::LessEq);
+        assert_eq!(tail.next().unwrap().0.value, Operator::Less);
+        assert_eq!(tail.next().unwrap().0.value, Operator::LessEq);
     }
 }

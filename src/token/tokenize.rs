@@ -3,13 +3,15 @@ use std::i64;
 use general::TryReader;
 
 use sourcecode::Position;
-use sourcecode::Findable;
+use sourcecode::Code;
+use sourcecode::Span;
+
 use token::token::Token;
 use token::token::Operator;
 use token::token::ReservedWord;
 use token::token::Dictionary;
 
-pub fn tokenize(s: &String) -> Result<Vec<Findable<Token>>, Position> {
+pub fn tokenize(s: &String) -> Result<Vec<Code<Token>>, Position> {
     let dictionary = Dictionary::default();
     let cs = &s.chars().collect();
     let mut reader = TryReader::new(cs);
@@ -27,35 +29,38 @@ pub fn tokenize(s: &String) -> Result<Vec<Findable<Token>>, Position> {
             continue;
         }
         if let Ok((consume, n)) = reader.try_(number) {
-            tokens.push(Findable::new(
-                Token::Number(n),
-                Position::new(line, pos)
-            ));
+            let span = Span::new(line, pos, consume);
+            tokens.push(Code {
+                value: Token::Number(n),
+                span,
+            });
             pos += consume;
             continue;
         }
         if let Ok((consume, w)) = reader.try_(word) {
+            let span = Span::new(line, pos, consume);
             let token = match w.as_str() {
                 "return" => Token::return_(),
                 "let" => Token::let_(),
                 wd => Token::Identifier(wd.to_string())
             };
-            tokens.push(Findable::new(
-                token,
-                Position::new(line, pos)
-            ));
+            tokens.push(Code {
+                value: token,
+                span,
+            });
             pos += consume;
             continue;
         }
         if let Ok((consume, t)) = reader.try_(|mut r| operator(&mut r, &dictionary)) {
-            tokens.push(Findable::new(
-                t.clone(),
-                Position::new(line, pos)
-            ));
+            let span = Span::new(line, pos, consume);
+            tokens.push(Code {
+                value: t.clone(),
+                span,
+            });
             pos += consume;
             continue;
         }
-        return Err(Position::new(line, pos))
+        return Err(Position{ line, pos })
     }
     Ok(tokens)
 }
@@ -111,12 +116,12 @@ fn number(reader: &mut TryReader<char>) -> Result<i64, Option<i64>> {
 }
 
 pub struct TokenReader<'a> {
-    tokens: &'a Vec<Findable<Token>>,
+    tokens: &'a Vec<Code<Token>>,
     needle: usize,
 }
 
 impl<'a> Iterator for TokenReader<'a> {
-    type Item = &'a Findable<Token>;
+    type Item = &'a Code<Token>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.has_next() {
@@ -130,7 +135,7 @@ impl<'a> Iterator for TokenReader<'a> {
 }
 
 impl TokenReader<'_> {
-    pub fn new(tokens: &Vec<Findable<Token>>) -> TokenReader {
+    pub fn new(tokens: &Vec<Code<Token>>) -> TokenReader {
         TokenReader { tokens: tokens, needle: 0 }
     }
 
@@ -138,7 +143,7 @@ impl TokenReader<'_> {
         return self.needle < self.tokens.len()
     }
 
-    pub fn peek(&self) -> Option<&Findable<Token>> {
+    pub fn peek(&self) -> Option<&Code<Token>> {
         if &self.needle < &self.tokens.len() {
             Some(&self.tokens[self.needle])
         } else {
@@ -151,36 +156,33 @@ impl TokenReader<'_> {
     }
 
     pub fn consume_reserved_word(&mut self, expected_word: ReservedWord)
-    -> Result<ReservedWord, Option<Position>> {
+    -> Result<Code<ReservedWord>, Option<Span>> {
         self.peek().ok_or(None)
-        .map(|findable| findable.map(|token| token.clone()))
-        .and_then(|token| match token.value() {
+        .and_then(|token| match token.value.clone() {
             Token::ReservedWord(actual_word) =>
-                if *actual_word==expected_word { self.skip(); Ok(*actual_word) }
-                else { Err(Some(token.position())) }
-            _ => Err(None),
+                if actual_word==expected_word { self.skip(); Ok(token.map_const(actual_word)) }
+                else { Err(Some(token.span)) }
+            _ => Err(Some(token.span)),
         })
     }
 
     pub fn consume_identifier(&mut self)
-    -> Result<String, Option<Position>> {
+    -> Result<Code<String>, Option<Span>> {
         self.peek().ok_or(None)
-        .map(|findable| findable.map(|token| token.clone()))
-        .and_then(|token| match token.value() {
-            Token::Identifier(name) => { self.skip(); Ok(name.clone()) },
-            _ => Err(Some(token.position())),
+        .and_then(|token| match &token.value {
+            Token::Identifier(name) => { self.skip(); Ok(token.map_const(name.clone())) },
+            _ => Err(Some(token.span)),
         })
     }
 
     pub fn consume_operator(&mut self, expected_operator: Operator)
-    -> Result<Operator, Option<Position>> {
+    -> Result<Code<Operator>, Option<Span>> {
         self.peek().ok_or(None)
-        .map(|findable| findable.map(|token| token.clone()))
-        .and_then(|token| match token.value() {
+        .and_then(|token| match token.value {
             Token::Operator(actual_operator) => 
-                if *actual_operator == expected_operator { self.skip(); Ok(*actual_operator) }
-                else { Err(Some(token.position())) },
-            _ => Err(Some(token.position())),
+                if actual_operator == expected_operator { self.skip(); Ok(token.map_const(actual_operator)) }
+                else { Err(Some(token.span)) },
+            _ => Err(Some(token.span)),
         })
     }
 }
@@ -196,26 +198,26 @@ mod tests {
 
         let findable_tokens = tokenize(&src).unwrap();
 
-        assert_eq!(findable_tokens[0].value(), &Token::Number(1));
-        assert_eq!(findable_tokens[0].position(), Position::new(0, 0));
+        assert_eq!(findable_tokens[0].value, Token::Number(1));
+        assert_eq!(findable_tokens[0].span, Span::new(0, 0, 1));
 
-        assert_eq!(findable_tokens[1].value(), &Token::add());
-        assert_eq!(findable_tokens[1].position(), Position::new(0, 2));
+        assert_eq!(findable_tokens[1].value, Token::add());
+        assert_eq!(findable_tokens[1].span, Span::new(0, 2, 1));
 
-        assert_eq!(findable_tokens[2].value(), &Token::Number(23));
-        assert_eq!(findable_tokens[2].position(), Position::new(0, 4));
+        assert_eq!(findable_tokens[2].value, Token::Number(23));
+        assert_eq!(findable_tokens[2].span, Span::new(0, 4, 2));
 
-        assert_eq!(findable_tokens[3].value(), &Token::sub());
-        assert_eq!(findable_tokens[3].position(), Position::new(0, 7));
+        assert_eq!(findable_tokens[3].value, Token::sub());
+        assert_eq!(findable_tokens[3].span, Span::new(0, 7, 1));
 
-        assert_eq!(findable_tokens[4].value(), &Token::Number(2));
-        assert_eq!(findable_tokens[4].position(), Position::new(0, 9));
+        assert_eq!(findable_tokens[4].value, Token::Number(2));
+        assert_eq!(findable_tokens[4].span, Span::new(0, 9, 1));
 
-        assert_eq!(findable_tokens[5].value(), &Token::mul());
-        assert_eq!(findable_tokens[5].position(), Position::new(0, 11));
+        assert_eq!(findable_tokens[5].value, Token::mul());
+        assert_eq!(findable_tokens[5].span, Span::new(0, 11, 1));
 
-        assert_eq!(findable_tokens[6].value(), &Token::Number(4));
-        assert_eq!(findable_tokens[6].position(), Position::new(0, 13));
+        assert_eq!(findable_tokens[6].value, Token::Number(4));
+        assert_eq!(findable_tokens[6].span, Span::new(0, 13, 1));
 
         assert_eq!(findable_tokens.len(), 7);
     }
@@ -226,14 +228,14 @@ mod tests {
 
         let findable_tokens = tokenize(&src).unwrap();
 
-        assert_eq!(findable_tokens[0].value(), &Token::Number(1));
-        assert_eq!(findable_tokens[0].position(), Position::new(0, 0));
+        assert_eq!(findable_tokens[0].value, Token::Number(1));
+        assert_eq!(findable_tokens[0].span, Span::new(0, 0, 1));
 
-        assert_eq!(findable_tokens[1].value(), &Token::le());
-        assert_eq!(findable_tokens[1].position(), Position::new(0, 2));
+        assert_eq!(findable_tokens[1].value, Token::le());
+        assert_eq!(findable_tokens[1].span, Span::new(0, 2, 2));
 
-        assert_eq!(findable_tokens[2].value(), &Token::Number(3));
-        assert_eq!(findable_tokens[2].position(), Position::new(0, 5));
+        assert_eq!(findable_tokens[2].value, Token::Number(3));
+        assert_eq!(findable_tokens[2].span, Span::new(0, 5, 1));
     }
 
     #[test]
@@ -242,14 +244,14 @@ mod tests {
 
         let findable_tokens = tokenize(&src).unwrap();
 
-        assert_eq!(findable_tokens[0].value(), &Token::Number(1));
-        assert_eq!(findable_tokens[0].position(), Position::new(0, 0));
+        assert_eq!(findable_tokens[0].value, Token::Number(1));
+        assert_eq!(findable_tokens[0].span, Span::new(0, 0, 1));
 
-        assert_eq!(findable_tokens[1].value(), &Token::add());
-        assert_eq!(findable_tokens[1].position(), Position::new(0, 1));
+        assert_eq!(findable_tokens[1].value, Token::add());
+        assert_eq!(findable_tokens[1].span, Span::new(0, 1, 1));
 
-        assert_eq!(findable_tokens[2].value(), &Token::Number(2));
-        assert_eq!(findable_tokens[2].position(), Position::new(0, 2));
+        assert_eq!(findable_tokens[2].value, Token::Number(2));
+        assert_eq!(findable_tokens[2].span, Span::new(0, 2, 1));
     }
 
     #[test]

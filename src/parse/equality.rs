@@ -1,7 +1,8 @@
 use std::collections::HashSet;
 use std::iter::FromIterator;
 
-use sourcecode::Position;
+use sourcecode::Code;
+use sourcecode::Span;
 
 use token::Operator;
 use token::TokenReader;
@@ -19,7 +20,7 @@ impl Equality {
         self.binary_operation.head()
     }
 
-    pub fn tail(&self) -> impl Iterator<Item = (Operator, &Relational)> {
+    pub fn tail(&self) -> impl Iterator<Item = (&Code<Operator>, &Relational)> {
         self.binary_operation.tail()
     }
 
@@ -33,8 +34,12 @@ impl Equality {
 
 impl SyntaxTree for Equality {
     fn parse(mut token_reader: &mut TokenReader)
-    -> Result<Equality, (Option<Position>, String)> {
+    -> Result<Equality, (Option<Span>, String)> {
         BinaryOperation::parse(&mut token_reader, &Self::operators())
         .map(|binary_operation| Equality{ binary_operation })
+    }
+
+    fn span(&self) -> Span {
+        self.binary_operation.span()
     }
 }

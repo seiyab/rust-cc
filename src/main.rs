@@ -7,6 +7,7 @@ mod general;
 mod sourcecode;
 
 use sourcecode::Position;
+use sourcecode::Span;
 
 mod token;
 use token::TokenReader;
@@ -44,8 +45,8 @@ fn main() {
 
     let root = match Root::parse(&mut token_reader) {
         Ok(root) => root,
-        Err((Some(position), message)) => {
-            point_error(&src, position, message.as_str());
+        Err((Some(span), message)) => {
+            span_error(&src, span, message.as_str());
             process::exit(1);
         },
         Err((None, message)) => {
@@ -69,7 +70,13 @@ fn log_error(s: &str) {
 }
 
 fn point_error(src: &String, position: Position, message: &str) {
-    log_error(src.as_str().split("\n").nth(position.line()).unwrap());
-    log_error(format!("{}^{}", " ".to_string().repeat(position.pos()).as_str(), message).as_str());
+    log_error(src.as_str().split("\n").nth(position.line).unwrap());
+    log_error(format!("{}^{}", " ".to_string().repeat(position.pos).as_str(), message).as_str());
+}
+
+fn span_error(src: &String, span: Span, message: &str) {
+    let Span{start, end} = span;
+    log_error(src.as_str().split("\n").nth(start.line).unwrap());
+    log_error(format!("{}^{}", " ".to_string().repeat(start.pos).as_str(), message).as_str());
 }
 

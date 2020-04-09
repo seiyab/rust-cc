@@ -37,9 +37,16 @@ try 1 "return 1 + 6 / 2 == 2 * 2"
 try 1 "return 7 != 7 + 1"
 try 5 "let x := 5
 return x"
+try 2 "let a := 1
+let b := 3
+return a + b / 3"
 try 14 "let a := 3
 let b := 5 * 6 - 8
 return a + b / 2"
+try 3 "let one := 1
+let two := 2
+let three := one + two
+return three"
 
 echo OK
 

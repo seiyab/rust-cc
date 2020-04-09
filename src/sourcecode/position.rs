@@ -1,19 +1,7 @@
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Eq, PartialOrd, Ord)]
 pub struct Position {
-    line: usize,
-    pos: usize,
-}
-
-impl Position {
-    pub fn line(&self) -> usize {
-        self.line
-    }
-    pub fn pos(&self) -> usize {
-        self.pos
-    }
-    pub fn new(line: usize, pos: usize) -> Position {
-        Position{ line, pos }
-    }
+    pub line: usize,
+    pub pos: usize,
 }
 
 pub struct Findable<T> {

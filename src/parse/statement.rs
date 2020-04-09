@@ -1,4 +1,7 @@
-use sourcecode::Position;
+use general::SemiGroup;
+
+use sourcecode::Span;
+use sourcecode::Code;
 
 use token::Operator;
 use token::TokenReader;
@@ -14,20 +17,27 @@ pub enum Statement {
 
 impl SyntaxTree for Statement {
     fn parse(mut token_reader: &mut TokenReader)
-    -> Result<Statement, (Option<Position>, String)> {
+    -> Result<Statement, (Option<Span>, String)> {
         Assignment::parse(&mut token_reader)
         .map(Statement::Assignment)
         .or_else(|_| Return::parse(&mut token_reader).map(Statement::Return))
     }
+
+    fn span(&self) -> Span {
+        match self {
+            Statement::Assignment(assignment) => assignment.span(),
+            Statement::Return(return_) => return_.span(),
+        }
+    }
 }
 
 pub struct Assignment {
-    identifier: String,
+    identifier: Code<String>,
     content: Expression,
 }
 
 impl Assignment {
-    pub fn identifier(&self) -> &String {
+    pub fn identifier(&self) -> &Code<String> {
         &self.identifier
     }
     pub fn content(&self) -> &Expression {
@@ -35,7 +45,7 @@ impl Assignment {
     }
 
     fn parse(token_reader: &mut TokenReader)
-    -> Result<Assignment, (Option<Position>, String)> {
+    -> Result<Assignment, (Option<Span>, String)> {
         match token_reader.consume_reserved_word(ReservedWord::Let) {
             Ok(_) => Ok(()),
             Err(err) => Err((err, String::from("letを期待していました")))
@@ -52,9 +62,14 @@ impl Assignment {
             Expression::parse(token_reader).map(|content| { Assignment{identifier, content} })
         )
     }
+
+    fn span(&self) -> Span {
+        self.identifier.span.plus(&self.content.span())
+    }
 }
 
 pub struct Return {
+    return_span: Span,
     content: Expression,
 }
 
@@ -64,14 +79,18 @@ impl Return {
     }
 
     fn parse(token_reader: &mut TokenReader)
-    -> Result<Return, (Option<Position>, String)> {
+    -> Result<Return, (Option<Span>, String)> {
         match token_reader.consume_reserved_word(ReservedWord::Return) {
-            Ok(_) => Ok(()),
+            Ok(ret) => Ok(ret),
             Err(err) => Err((err, String::from("returnを期待していました")))
         }
-        .and_then(|()| match Expression::parse(token_reader) {
-            Ok(content) => Ok(Return{content}),
+        .and_then(|ret| match Expression::parse(token_reader) {
+            Ok(content) => Ok(Return{content, return_span: ret.span}),
             Err(err) => Err(err)
         })
+    }
+
+    fn span(&self) -> Span {
+        self.return_span.plus(&self.content.span())
     }
 }

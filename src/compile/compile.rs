@@ -32,7 +32,7 @@ fn compile_statement(statement: &Statement, scope: &mut dyn Scope) -> Vec<Instru
     match statement {
         Statement::Assignment(asn) => {
             let mut instructions = compile_expression(asn.content(), scope);
-            instructions.append(&mut scope.declare(asn.identifier()).unwrap());
+            instructions.append(&mut scope.declare(&asn.identifier().value).unwrap());
             instructions
         }
         Statement::Return(ret) => compile_expression(ret.content(), scope)
@@ -50,7 +50,7 @@ fn compile_equality(equality: &Equality, scope: &dyn Scope) -> Vec<Instruction> 
         instructions.push(Instruction::Pop(Register::Rdi));
         instructions.push(Instruction::Pop(Register::Rax));
         instructions.push(Instruction::Cmp(Register::Rax, Box::new(Register::Rdi)));
-        let setx = match operator {
+        let setx = match operator.value {
             Operator::Equal => Instruction::Sete(Register::Al),
             _ => Instruction::Setne(Register::Al),
         };
@@ -68,7 +68,7 @@ fn compile_relational(relational: &Relational, scope: &dyn Scope) -> Vec<Instruc
         instructions.push(Instruction::Pop(Register::Rdi));
         instructions.push(Instruction::Pop(Register::Rax));
         instructions.push(Instruction::Cmp(Register::Rax, Box::new(Register::Rdi)));
-        let setx = match operator {
+        let setx = match operator.value {
             Operator::Less => Instruction::Setl(Register::Al),
             Operator::LessEq => Instruction::Setle(Register::Al),
             Operator::Greater => Instruction::Setg(Register::Al),
@@ -89,7 +89,7 @@ fn compile_add(add: &Add, scope: &dyn Scope) -> Vec<Instruction> {
         instructions.append(&mut compile_multiply(multiply, scope));
         instructions.push(Instruction::Pop(Register::Rdi));
         instructions.push(Instruction::Pop(Register::Rax));
-        match operator {
+        match operator.value {
             Operator::Add => instructions.push(Instruction::Add(Register::Rax, Box::new(Register::Rdi))),
             _ => instructions.push(Instruction::Sub(Register::Rax, Box::new(Register::Rdi))),
         }
@@ -106,7 +106,7 @@ fn compile_multiply(multiply: &Multiply, scope: &dyn Scope) -> Vec<Instruction> 
         instructions.append(&mut compile_unary(unary, scope));
         instructions.push(Instruction::Pop(Register::Rdi));
         instructions.push(Instruction::Pop(Register::Rax));
-        match operator {
+        match operator.value {
             Operator::Mul => instructions.push(Instruction::Imul(Register::Rax, Box::new(Register::Rdi))),
             _ => {
                 instructions.push(Instruction::Cqo);
@@ -121,8 +121,8 @@ fn compile_multiply(multiply: &Multiply, scope: &dyn Scope) -> Vec<Instruction> 
 fn compile_unary(unary: &Unary, scope: &dyn Scope) -> Vec<Instruction> {
     let mut instructions = Vec::new();
     match &unary {
-        &Unary::Positive(primary) => instructions.append(&mut compile_primary(&primary, scope)),
-        &Unary::Negative(primary) => {
+        &Unary::Positive(primary, _) => instructions.append(&mut compile_primary(&primary, scope)),
+        &Unary::Negative(primary, _) => {
             instructions.append(&mut compile_primary(&primary, scope));
             instructions.push(Instruction::Pop(Register::Rdi));
             instructions.push(Instruction::Mov(Box::new(Register::Rax), Box::new(0)));
@@ -136,8 +136,8 @@ fn compile_unary(unary: &Unary, scope: &dyn Scope) -> Vec<Instruction> {
 fn compile_primary(primary: &Primary, scope: &dyn Scope) -> Vec<Instruction> {
     let mut instructions = Vec::new();
     match &primary {
-        &Primary::Integer(n) => instructions.push(Instruction::Push(Box::new(*n))),
-        &Primary::Identifier(name) => instructions.append(&mut scope.lookup(&name).unwrap()),
+        &Primary::Integer(n) => instructions.push(Instruction::Push(Box::new(n.value))),
+        &Primary::Identifier(name) => instructions.append(&mut scope.lookup(&name.value).unwrap()),
         &Primary::Expression(expression) => instructions.append(&mut compile_expression(&expression, scope)),
     }
     instructions

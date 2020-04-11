@@ -27,16 +27,17 @@ impl <Element: SyntaxTree> BinaryOperation<Element> {
             Ok(element) => element,
             Err(err) => return Err(err),
         };
-        let maybe_operator = token_reader.peek().and_then(|token| {
-            match token.value {
-                Token::Operator(op) if operators.contains(&op) => Some(token.map_const(op)),
-                _ => None,
-            }
-        });
+        let maybe_operator = token_reader.try_(|reader| {
+            reader.next().and_then(|token| {
+                match token.value {
+                    Token::Operator(op) if operators.contains(&op) => Some(token.map_const(op)),
+                    _ => None,
+                }
+            }).ok_or(())
+        }).ok();
         match maybe_operator {
             None => Ok(Self::Single(left)),
             Some(operator) => {
-                token_reader.skip();
                 match Self::parse(&mut token_reader, operators) {
                     Ok(right) => Ok(Self::Binary {left, operator, right: Box::new(right)}),
                     Err(err) => Err(err),

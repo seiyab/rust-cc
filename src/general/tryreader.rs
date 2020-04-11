@@ -11,7 +11,7 @@ impl<'l, T> TryReader<'l, T> {
             needle: 0,
         }
     }
-    pub fn next(&mut self) -> Option<&T> {
+    pub fn next(&mut self) -> Option<&'l T> {
         if self.has_next() {
             let t = &self.elements[self.needle];
             self.needle += 1;
@@ -20,8 +20,8 @@ impl<'l, T> TryReader<'l, T> {
             None
         }
     }
-    pub fn try_<S, F>(&mut self, f: F) -> Result<(usize, S), Option<S>>
-    where F: FnOnce(&mut TryReader<T>) -> Result<S, Option<S>> {
+    pub fn try_<R, S, F>(&mut self, f: F) -> Result<(usize, R), S>
+    where F: FnOnce(&mut TryReader<T>) -> Result<R, S> {
         let mut clone = TryReader {
             elements: self.elements,
             needle: self.needle
@@ -31,8 +31,7 @@ impl<'l, T> TryReader<'l, T> {
                 self.needle = clone.needle;
                 Ok(result)
             },
-            Err(Some(replacement)) => Ok((clone.needle - self.needle, replacement)),
-            Err(None) => Err(None),
+            Err(err) => Err(err),
         }
     }
 

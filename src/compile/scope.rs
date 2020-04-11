@@ -1,10 +1,14 @@
 use std::collections::HashMap;
+
+use sourcecode::Code;
+use sourcecode::Span;
+
 use compile::assembly::Instruction;
 use compile::assembly::Address;
 use compile::assembly::Register;
 
 pub trait Scope {
-    fn lookup(&self, target: &String) -> Result<Vec<Instruction>, ()>;
+    fn lookup(&self, target: &Code<String>) -> Result<Vec<Instruction>, Span>;
     fn declare(&mut self, target: &String) -> Result<Vec<Instruction>, ()>;
     fn prologue(&self) -> Vec<Instruction>;
     fn epilogue(&self) -> Vec<Instruction>;
@@ -27,10 +31,10 @@ impl CurrentScope {
 }
 
 impl Scope for CurrentScope{
-    fn lookup(&self, target: &String) -> Result<Vec<Instruction>, ()> {
+    fn lookup(&self, target: &Code<String>) -> Result<Vec<Instruction>, Span> {
         self.variables
-            .get(target)
-            .ok_or(())
+            .get(&target.value)
+            .ok_or(target.span)
             .map(|&offset| {
                 vec![
                     Instruction::Mov(Box::new(Register::Rax), Box::new(Register::Rbp)),

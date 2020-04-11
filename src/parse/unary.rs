@@ -17,23 +17,32 @@ pub enum Unary {
 impl SyntaxTree for Unary {
     fn parse(token_reader: &mut TokenReader)
     -> Result<Unary, (Option<Span>, String)> {
-        let maybe_token = token_reader.peek();
-        match token_reader.peek() {
-            Some(token) => {
-                match token.value {
-                    Token::Operator(Operator::Add) => {
-                        token_reader.skip();
-                        Primary::parse(token_reader).map(|primary| Unary::Positive(primary, token.span.plus(&primary.span())))
-                    },
-                    Token::Operator(Operator::Sub) => {
-                        token_reader.skip();
-                        Primary::parse(token_reader).map(|primary| Unary::Negative(primary, token.span.plus(&primary.span())))
-                    },
-                    _ => Primary::parse(token_reader).map(|primary| Unary::Positive(primary, primary.span())),
-
+        let operator = token_reader.try_(|reader| {
+            let maybe_token = reader.next();
+            match maybe_token {
+                None => Err(()),
+                Some(token) => {
+                    match token.value {
+                        Token::Operator(Operator::Add) => Ok((Operator::Add, token.span)),
+                        Token::Operator(Operator::Sub) => Ok((Operator::Sub, token.span)),
+                        _ => Err(()),
+                    }
                 }
             }
-            None => return Err((None, String::from("\"+\"、\"-\"、または式を期待していましたが、トークンがありませんでした。"))),
+        });
+        match operator {
+            Ok((Operator::Add, span)) => Primary::parse(token_reader).map(|primary| {
+                let s = span.plus(&primary.span());
+                Unary::Positive(primary, s)
+            }),
+            Ok((Operator::Sub, span)) => Primary::parse(token_reader).map(|primary| {
+                let s = span.plus(&primary.span());
+                Unary::Negative(primary, s)
+            }),
+            _ =>  Primary::parse(token_reader).map(|primary| {
+                let span = primary.span();
+                Unary::Positive(primary, span)
+            }),
         }
     }
 

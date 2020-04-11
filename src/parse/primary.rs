@@ -40,9 +40,9 @@ impl SyntaxTree for Primary {
             Some(token) => token,
             None => return Err((None, String::from("式を期待していましたが、トークンがありませんでした。"))),
         };
-        match token.value {
-            Token::Number(number) => Ok(Primary::Integer(token.map_const(number))),
-            Token::Identifier(name) => Ok(Primary::Identifier(token.map_const(name))),
+        match &token.value {
+            Token::Number(number) => Ok(Primary::Integer(token.map_const(*number))),
+            Token::Identifier(name) => Ok(Primary::Identifier(token.map_const(name.clone()))),
             Token::Bracket(BracketSide::Left(Bracket::Round)) => Self::parse_round_bracket(&mut token_reader),
             _ => Err((Some(token.span), String::from("数字または識別子または\"(\"を期待しています。"))),
         }

@@ -4,8 +4,10 @@ use std::str::Chars;
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     Operator(Operator),
+    ReservedWord(ReservedWord),
     Number(i64),
-    Bracket(BracketSide)
+    Bracket(BracketSide),
+    Identifier(String),
 }
 
 impl Token {
@@ -39,11 +41,20 @@ impl Token {
     pub const fn ge() -> Token {
         Token::Operator(Operator::GreaterEq)
     }
+    pub const fn assign() -> Token {
+        Token::Operator(Operator::Assign)
+    }
     pub const fn left_round_bracket() -> Token {
         Token::Bracket(BracketSide::Left(Bracket::Round))
     }
     pub const fn right_round_bracket() -> Token {
         Token::Bracket(BracketSide::Right(Bracket::Round))
+    }
+    pub const fn let_() -> Token {
+        Token::ReservedWord(ReservedWord::Let)
+    }
+    pub const fn return_() -> Token {
+        Token::ReservedWord(ReservedWord::Return)
     }
 }
 
@@ -59,6 +70,13 @@ pub enum Operator {
     Greater,
     LessEq,
     GreaterEq,
+    Assign,
+}
+
+#[derive(Debug, PartialEq, Clone, Copy, Hash, Eq)]
+pub enum ReservedWord {
+    Let,
+    Return,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -89,6 +107,14 @@ impl Dictionary {
         result
     }
 
+    pub fn dig(&self, c: char) -> Result<&Dictionary, &Option<Token>> {
+        self.next.get(&c).map(|d| d.as_ref()).ok_or(&self.terminal)
+    }
+
+    pub fn terminal(&self) -> &Option<Token> {
+        &self.terminal
+    }
+
     fn insert(&mut self, s: &String, t: &Token) {
         // csがmutなのが微妙なのでHaskell風のListを使いたい
         fn recursive_insert(dict: &mut Dictionary, cs: &mut Chars, t: &Token) {
@@ -105,21 +131,6 @@ impl Dictionary {
         recursive_insert(self, &mut s.chars(), t);
     }
 
-    pub fn longest_match(&self, s: &String) -> Option<(Token, usize)> {
-        fn recursive_longest_match(dict: &Dictionary, cs: &mut Chars, depth: usize) -> Option<(Token, usize)> {
-            if let Some(c) = cs.next() {
-                if let Some(d) = dict.next.get(&c) {
-                    recursive_longest_match(d, cs, depth + 1)
-                } else {
-                    dict.terminal.as_ref().map(|token| (token.clone(), depth)).clone()
-                }
-            } else {
-                dict.terminal.as_ref().map(|token| (token.clone(), depth)).clone()
-            }
-        }
-        recursive_longest_match(self, &mut s.chars(), 0)
-    }
-
     pub fn default() -> Dictionary {
         let mut string_to_token = HashMap::new();
         string_to_token.insert(String::from("+"), Token::add());
@@ -134,6 +145,7 @@ impl Dictionary {
         string_to_token.insert(String::from("!="), Token::neq());
         string_to_token.insert(String::from("("), Token::left_round_bracket());
         string_to_token.insert(String::from(")"), Token::right_round_bracket());
+        string_to_token.insert(String::from(":="), Token::assign());
 
         Dictionary::of(&string_to_token)
     }
@@ -151,29 +163,5 @@ mod tests {
 
         let le = dictionary.next.get(&'<').and_then(|d| d.next.get(&'=')).and_then(|d| d.terminal.as_ref());
         assert_eq!(Some(&Token::le()), le);
-    }
-
-    #[test]
-    fn test_longest_match() {
-        let mut string_to_token = HashMap::new();
-        string_to_token.insert(String::from("+"), Token::add());
-        string_to_token.insert(String::from("-"), Token::sub());
-        string_to_token.insert(String::from("<"), Token::lt());
-        string_to_token.insert(String::from("<="), Token::le());
-        string_to_token.insert(String::from(">"), Token::gt());
-        string_to_token.insert(String::from(">="), Token::ge());
-
-        let dictionary = Dictionary::of(&string_to_token);
-
-        println!("{}", dictionary.next.len());
-        match dictionary.next.get(&'+').and_then(|d| d.terminal.as_ref()) {
-            Some(_) => println!("some"),
-            None => println!("none"),
-        }
-
-        assert_eq!(Some((Token::add(), 1)), dictionary.longest_match(&String::from("+1")));
-        assert_eq!(Some((Token::lt(), 1)), dictionary.longest_match(&String::from("<->")));
-        assert_eq!(Some((Token::le(), 2)), dictionary.longest_match(&String::from("<==")));
-        assert_eq!(None, dictionary.longest_match(&String::from("12")));
     }
 }

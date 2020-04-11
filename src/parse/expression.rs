@@ -1,4 +1,4 @@
-use sourcecode::Position;
+use sourcecode::Span;
 
 use token::TokenReader;
 
@@ -17,8 +17,12 @@ impl Expression {
 
 impl SyntaxTree for Expression {
     fn parse(mut token_reader: &mut TokenReader)
-    -> Result<Expression, (Option<Position>, String)> {
+    -> Result<Expression, (Option<Span>, String)> {
         Equality::parse(&mut token_reader)
         .map(|equality| Expression {equality})
+    }
+
+    fn span(&self) -> Span {
+        self.equality.span()
     }
 }

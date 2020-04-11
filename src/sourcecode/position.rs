@@ -1,5 +1,8 @@
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub struct Position(pub usize);
+#[derive(Debug, PartialEq, Clone, Copy, Eq, PartialOrd, Ord)]
+pub struct Position {
+    pub line: usize,
+    pub pos: usize,
+}
 
 pub struct Findable<T> {
     value: T,

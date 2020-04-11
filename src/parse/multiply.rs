@@ -1,7 +1,8 @@
 use std::collections::HashSet;
 use std::iter::FromIterator;
 
-use sourcecode::Position;
+use sourcecode::Code;
+use sourcecode::Span;
 
 use token::Operator;
 use token::TokenReader;
@@ -19,42 +20,41 @@ impl Multiply {
         self.binary_operation.head()
     }
 
-    pub fn tail(&self) -> impl Iterator<Item = (Operator, &Unary)> {
+    pub fn tail(&self) -> impl Iterator<Item = (&Code<Operator>, &Unary)> {
         self.binary_operation.tail()
     }
 }
 
 impl SyntaxTree for Multiply {
     fn parse(mut token_reader: &mut TokenReader)
-    -> Result<Multiply, (Option<Position>, String)> {
+    -> Result<Multiply, (Option<Span>, String)> {
         let operators = HashSet::from_iter(vec![Operator::Mul, Operator::Div].into_iter());
         BinaryOperation::parse(&mut token_reader, &operators)
         .map(|binary_operation| Multiply {binary_operation})
+    }
+
+    fn span(&self) -> Span {
+        self.binary_operation.span()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sourcecode::Findable;
-    use token::Token;
+    use token::tokenize;
 
     #[test]
     fn test_parse_multiply() {
-        // 3*5/1
-        let findable_tokens = vec![
-            Findable::new(Token::Number(3), Position(0)),
-            Findable::new(Token::mul(), Position(1)),
-            Findable::new(Token::Number(5), Position(2)),
-            Findable::new(Token::div(), Position(3)),
-            Findable::new(Token::Number(1), Position(4)),
-        ];
-        let mut token_reader = TokenReader::new(&findable_tokens);
+        let src = "3 * 5 / 1";
+
+        let tokens = tokenize(&src.to_string()).unwrap();
+
+        let mut token_reader = TokenReader::new(&tokens);
 
         let multiply = Multiply::parse(&mut token_reader).unwrap();
         let mut tail = multiply.tail();
 
-        assert_eq!(tail.next().unwrap().0, Operator::Mul);
-        assert_eq!(tail.next().unwrap().0, Operator::Div);
+        assert_eq!(tail.next().unwrap().0.value, Operator::Mul);
+        assert_eq!(tail.next().unwrap().0.value, Operator::Div);
     }
 }

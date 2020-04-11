@@ -1,4 +1,6 @@
-use sourcecode::Position;
+use general::SemiGroup;
+
+use sourcecode::Span;
 
 use token::TokenReader;
 use token::Token;
@@ -8,24 +10,46 @@ use parse::SyntaxTree;
 use parse::Primary;
 
 pub enum Unary {
-    Positive(Primary),
-    Negative(Primary),
+    Positive(Primary, Span),
+    Negative(Primary, Span),
 }
 
 impl SyntaxTree for Unary {
     fn parse(token_reader: &mut TokenReader)
-    -> Result<Unary, (Option<Position>, String)> {
-        match token_reader.peek().map(|findable| findable.value()) {
-            Some(Token::Operator(Operator::Add)) => {
-                token_reader.skip();
-                Primary::parse(token_reader).map(Unary::Positive)
-            },
-            Some(Token::Operator(Operator::Sub)) => {
-                token_reader.skip();
-                Primary::parse(token_reader).map(Unary::Negative)
-            },
-            Some(_) => Primary::parse(token_reader).map(Unary::Positive),
-            None => return Err((None, String::from("\"+\"、\"-\"、または式を期待していましたが、トークンがありませんでした。"))),
+    -> Result<Unary, (Option<Span>, String)> {
+        let operator = token_reader.try_(|reader| {
+            let maybe_token = reader.next();
+            match maybe_token {
+                None => Err(()),
+                Some(token) => {
+                    match token.value {
+                        Token::Operator(Operator::Add) => Ok((Operator::Add, token.span)),
+                        Token::Operator(Operator::Sub) => Ok((Operator::Sub, token.span)),
+                        _ => Err(()),
+                    }
+                }
+            }
+        });
+        match operator {
+            Ok((Operator::Add, span)) => Primary::parse(token_reader).map(|primary| {
+                let s = span.plus(&primary.span());
+                Unary::Positive(primary, s)
+            }),
+            Ok((Operator::Sub, span)) => Primary::parse(token_reader).map(|primary| {
+                let s = span.plus(&primary.span());
+                Unary::Negative(primary, s)
+            }),
+            _ =>  Primary::parse(token_reader).map(|primary| {
+                let span = primary.span();
+                Unary::Positive(primary, span)
+            }),
+        }
+    }
+
+    fn span(&self) -> Span {
+        match self {
+            Unary::Positive(_, span) => span.clone(),
+            Unary::Negative(_, span) => span.clone(),
         }
     }
 }
@@ -33,20 +57,17 @@ impl SyntaxTree for Unary {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sourcecode::Findable;
+    use token::tokenize;
 
     #[test]
     fn test_parse_positive() {
-        // +3
-        let findable_tokens = vec![
-            Findable::new(Token::add(), Position(0)),
-            Findable::new(Token::Number(3), Position(1)),
-        ];
-        let mut token_reader = TokenReader::new(&findable_tokens);
+        let src = "+3";
+        let tokens = tokenize(&src.to_string()).unwrap();
+        let mut token_reader = TokenReader::new(&tokens);
 
         let unary = Unary::parse(&mut token_reader).unwrap();
 
-        if let Unary::Positive(_) = unary {
+        if let Unary::Positive(_, _) = unary {
         } else {
             panic!("正になっていません。")
         }
@@ -55,14 +76,13 @@ mod tests {
     #[test]
     fn test_parse_implicit_positive() {
         // 6
-        let findable_tokens = vec![
-            Findable::new(Token::Number(6), Position(0)),
-        ];
-        let mut token_reader = TokenReader::new(&findable_tokens);
+        let src = "6";
+        let tokens = tokenize(&src.to_string()).unwrap();
+        let mut token_reader = TokenReader::new(&tokens);
 
         let unary = Unary::parse(&mut token_reader).unwrap();
 
-        if let Unary::Positive(_) = unary {
+        if let Unary::Positive(_, _) = unary {
         } else {
             panic!("正になっていません。")
         }
@@ -70,16 +90,13 @@ mod tests {
 
     #[test]
     fn test_parse_negative() {
-        // -5
-        let findable_tokens = vec![
-            Findable::new(Token::sub(), Position(0)),
-            Findable::new(Token::Number(5), Position(1)),
-        ];
-        let mut token_reader = TokenReader::new(&findable_tokens);
+        let src = "-5";
+        let tokens = tokenize(&src.to_string()).unwrap();
+        let mut token_reader = TokenReader::new(&tokens);
 
         let unary = Unary::parse(&mut token_reader).unwrap();
 
-        if let Unary::Negative(_) = unary {
+        if let Unary::Negative(_, _) = unary {
         } else {
             panic!("正になっています。")
         }

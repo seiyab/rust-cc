@@ -29,10 +29,16 @@ fn main() {
         process::exit(1);
     }
 
+    let main_label = if env::var("OS").map(|var| var == "MAC".to_string()).unwrap_or(false) {
+        "_main"
+    } else {
+        "main"
+    };
+
     println!(".intel_syntax noprefix");
-    println!(".global _main");
+    println!("{}", format!(".global {}", main_label));
     println!("");
-    println!("_main:");
+    println!("{}", format!("{}:", main_label));
 
     let src = args[1].clone();
     let tokens = match tokenize(&src) {

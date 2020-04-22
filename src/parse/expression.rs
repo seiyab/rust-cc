@@ -1,6 +1,9 @@
-use sourcecode::Span;
+use general::TryReader;
 
-use token::TokenReader;
+use sourcecode::Span;
+use sourcecode::Code;
+
+use token::Token;
 
 use parse::Equality;
 use parse::SyntaxTree;
@@ -16,7 +19,7 @@ impl Expression {
 }
 
 impl SyntaxTree for Expression {
-    fn parse(mut token_reader: &mut TokenReader)
+    fn parse(mut token_reader: &mut TryReader<Code<Token>>)
     -> Result<Expression, (Option<Span>, String)> {
         Equality::parse(&mut token_reader)
         .map(|equality| Expression {equality})

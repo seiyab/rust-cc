@@ -1,10 +1,11 @@
+use general::TryReader;
+
 use sourcecode::Code;
 use sourcecode::Span;
 
 use token::BracketSide;
 use token::Bracket;
 use token::Token;
-use token::TokenReader;
 
 use parse::SyntaxTree;
 use parse::Expression;
@@ -16,7 +17,7 @@ pub enum Primary {
 }
 
 impl Primary {
-    fn parse_round_bracket(token_reader: &mut TokenReader)
+    fn parse_round_bracket(token_reader: &mut TryReader<Code<Token>>)
     -> Result<Primary, (Option<Span>, String)> {
         let expression = match Expression::parse(token_reader) {
             Ok(exp) => exp,
@@ -34,7 +35,7 @@ impl Primary {
 }
 
 impl SyntaxTree for Primary {
-    fn parse(mut token_reader: &mut TokenReader)
+    fn parse(mut token_reader: &mut TryReader<Code<Token>>)
     -> Result<Primary, (Option<Span>, String)> {
         let token = match token_reader.next() {
             Some(token) => token,
@@ -72,7 +73,7 @@ mod tests {
                 span: Span::new(0, 0, 1),
             },
         ];
-        let mut token_reader = TokenReader::new(&tokens);
+        let mut token_reader = TryReader::new(&tokens);
 
         let primary = Primary::parse(&mut token_reader).unwrap();
 
@@ -89,7 +90,7 @@ mod tests {
 
         let tokens = tokenize(&src.to_string()).unwrap();
 
-        let mut token_reader = TokenReader::new(&tokens);
+        let mut token_reader = TryReader::new(&tokens);
 
         let primary = Primary::parse(&mut token_reader).unwrap();
 

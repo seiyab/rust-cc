@@ -1,12 +1,12 @@
 use std::collections::HashSet;
 
 use general::SemiGroup;
+use general::TryReader;
 
 use sourcecode::Code;
 use sourcecode::Span;
 
 use token::Token;
-use token::TokenReader;
 use token::Operator;
 
 use parse::SyntaxTree;
@@ -21,7 +21,7 @@ pub enum BinaryOperation<Element: SyntaxTree> {
 }
 
 impl <Element: SyntaxTree> BinaryOperation<Element> {
-    pub fn parse(mut token_reader: &mut TokenReader, operators: &HashSet<Operator>)
+    pub fn parse(mut token_reader: &mut TryReader<Code<Token>>, operators: &HashSet<Operator>)
     -> Result<Self, (Option<Span>, String)> {
         let left = match Element::parse(&mut token_reader) {
             Ok(element) => element,
@@ -34,7 +34,7 @@ impl <Element: SyntaxTree> BinaryOperation<Element> {
                     _ => None,
                 }
             }).ok_or(())
-        }).ok();
+        }).ok().map(|(_, op)| op);
         match maybe_operator {
             None => Ok(Self::Single(left)),
             Some(operator) => {

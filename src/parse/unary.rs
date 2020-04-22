@@ -1,9 +1,11 @@
 use general::SemiGroup;
+use general::TryReader;
 
+use token::Token;
+
+use sourcecode::Code;
 use sourcecode::Span;
 
-use token::TokenReader;
-use token::Token;
 use token::Operator;
 
 use parse::SyntaxTree;
@@ -15,7 +17,7 @@ pub enum Unary {
 }
 
 impl SyntaxTree for Unary {
-    fn parse(token_reader: &mut TokenReader)
+    fn parse(token_reader: &mut TryReader<Code<Token>>)
     -> Result<Unary, (Option<Span>, String)> {
         let operator = token_reader.try_(|reader| {
             let maybe_token = reader.next();
@@ -29,7 +31,7 @@ impl SyntaxTree for Unary {
                     }
                 }
             }
-        });
+        }).map(|(_, op)| op);
         match operator {
             Ok((Operator::Add, span)) => Primary::parse(token_reader).map(|primary| {
                 let s = span.plus(&primary.span());
@@ -63,7 +65,7 @@ mod tests {
     fn test_parse_positive() {
         let src = "+3";
         let tokens = tokenize(&src.to_string()).unwrap();
-        let mut token_reader = TokenReader::new(&tokens);
+        let mut token_reader = TryReader::new(&tokens);
 
         let unary = Unary::parse(&mut token_reader).unwrap();
 
@@ -78,7 +80,7 @@ mod tests {
         // 6
         let src = "6";
         let tokens = tokenize(&src.to_string()).unwrap();
-        let mut token_reader = TokenReader::new(&tokens);
+        let mut token_reader = TryReader::new(&tokens);
 
         let unary = Unary::parse(&mut token_reader).unwrap();
 
@@ -92,7 +94,7 @@ mod tests {
     fn test_parse_negative() {
         let src = "-5";
         let tokens = tokenize(&src.to_string()).unwrap();
-        let mut token_reader = TokenReader::new(&tokens);
+        let mut token_reader = TryReader::new(&tokens);
 
         let unary = Unary::parse(&mut token_reader).unwrap();
 

@@ -1,11 +1,13 @@
 use std::collections::HashSet;
 use std::iter::FromIterator;
 
+use general::TryReader;
+
 use sourcecode::Code;
 use sourcecode::Span;
 
 use token::Operator;
-use token::TokenReader;
+use token::Token;
 
 use parse::SyntaxTree;
 use parse::BinaryOperation;
@@ -35,7 +37,7 @@ impl Relational {
 }
 
 impl SyntaxTree for Relational {
-    fn parse(mut token_reader: &mut TokenReader)
+    fn parse(mut token_reader: &mut TryReader<Code<Token>>)
     -> Result<Relational, (Option<Span>, String)> {
         BinaryOperation::parse(&mut token_reader, &Self::operators())
         .map(|binary_operation| Relational {binary_operation})
@@ -55,7 +57,7 @@ mod tests {
     fn test_parse_relational() {
         let src = "3 < 5 <= 1";
         let tokens = tokenize(&src.to_string()).unwrap();
-        let mut token_reader = TokenReader::new(&tokens);
+        let mut token_reader = TryReader::new(&tokens);
 
         let relational = Relational::parse(&mut token_reader).unwrap();
         let mut tail = relational.tail();

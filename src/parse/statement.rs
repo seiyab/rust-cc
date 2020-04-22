@@ -1,10 +1,11 @@
 use general::SemiGroup;
+use general::TryReader;
 
 use sourcecode::Span;
 use sourcecode::Code;
 
 use token::Operator;
-use token::TokenReader;
+use token::Token;
 use token::ReservedWord;
 
 use parse::SyntaxTree;
@@ -16,7 +17,7 @@ pub enum Statement {
 }
 
 impl SyntaxTree for Statement {
-    fn parse(mut token_reader: &mut TokenReader)
+    fn parse(mut token_reader: &mut TryReader<Code<Token>>)
     -> Result<Statement, (Option<Span>, String)> {
         Assignment::parse(&mut token_reader)
         .map(Statement::Assignment)
@@ -44,23 +45,41 @@ impl Assignment {
         &self.content
     }
 
-    fn parse(token_reader: &mut TokenReader)
+    fn parse(token_reader: &mut TryReader<Code<Token>>)
     -> Result<Assignment, (Option<Span>, String)> {
-        match token_reader.consume_reserved_word(ReservedWord::Let) {
-            Ok(_) => Ok(()),
-            Err(err) => Err((err, String::from("letを期待していました")))
-        }
-        .and_then(|()| match token_reader.consume_identifier() {
-            Ok(name) => Ok(name),
-            Err(err) => Err((err, String::from("識別子を期待していました"))),
-        })
-        .and_then(|name| match token_reader.consume_operator(Operator::Assign) {
-            Ok(_) => Ok(name),
-            Err(err) => Err((err, String::from("代入演算子を期待していました"))),
-        })
-        .and_then(|identifier|
-            Expression::parse(token_reader).map(|content| { Assignment{identifier, content} })
-        )
+        match token_reader.try_next(|token| {
+            match token.value {
+                Token::ReservedWord(ReservedWord::Let) => Ok(()),
+                _ => Err(Some(token.span)),
+            }
+        }) {
+            Ok(_) => (),
+            Err(err) => return Err((err, String::from("letを期待していました")))
+        };
+        let identifier = match token_reader.try_next(|token| {
+            match &token.value {
+                Token::Identifier(name) => Ok(token.map_const(name.clone())),
+                _ => Err(token.span)
+            }
+        }) {
+            Ok(name) => name,
+            Err(span) => return Err((Some(span), "識別子を期待していました。".to_string()))
+        };
+        match token_reader.try_next(|token| {
+            match token.value {
+                Token::Operator(Operator::Assign) => Ok(()),
+                _ => Err(token.span)
+            }
+        }) {
+            Ok(_) => (),
+            Err(err) => return Err((Some(err), String::from("代入演算子を期待していました"))),
+        };
+        let content = match Expression::parse(token_reader) {
+            Ok(expr) => expr,
+            Err(e) => return Err(e),
+        };
+
+        Ok(Self {identifier, content})
     }
 
     fn span(&self) -> Span {
@@ -78,14 +97,19 @@ impl Return {
         return &self.content
     }
 
-    fn parse(token_reader: &mut TokenReader)
+    fn parse(token_reader: &mut TryReader<Code<Token>>)
     -> Result<Return, (Option<Span>, String)> {
-        match token_reader.consume_reserved_word(ReservedWord::Return) {
-            Ok(ret) => Ok(ret),
-            Err(err) => Err((err, String::from("returnを期待していました")))
+        match token_reader.try_next(|token| {
+            match token.value {
+                Token::ReservedWord(ReservedWord::Return) => Ok(token.span),
+                _ => Err(token.span)
+            }
+        }) {
+            Ok(ret_span) => Ok(ret_span),
+            Err(err) => Err((Some(err), String::from("returnを期待していました")))
         }
-        .and_then(|ret| match Expression::parse(token_reader) {
-            Ok(content) => Ok(Return{content, return_span: ret.span}),
+        .and_then(|ret_span| match Expression::parse(token_reader) {
+            Ok(content) => Ok(Return{content, return_span: ret_span}),
             Err(err) => Err(err)
         })
     }

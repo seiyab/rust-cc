@@ -1,9 +1,11 @@
 use general::FreeMonoid;
 use general::SemiGroup;
+use general::TryReader;
 
+use token::Token;
+
+use sourcecode::Code;
 use sourcecode::Span;
-
-use token::TokenReader;
 
 use parse::SyntaxTree;
 use parse::Statement;
@@ -19,7 +21,7 @@ impl Root {
 }
 
 impl SyntaxTree for Root {
-    fn parse(mut token_reader: &mut TokenReader)
+    fn parse(mut token_reader: &mut TryReader<Code<Token>>)
     -> Result<Root, (Option<Span>, String)> {
         let mut statements = Vec::new();
         while token_reader.has_next() {

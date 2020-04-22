@@ -20,6 +20,7 @@ impl<'l, T> TryReader<'l, T> {
             None
         }
     }
+
     pub fn try_<R, S, F>(&mut self, f: F) -> Result<(usize, R), S>
     where F: FnOnce(&mut TryReader<T>) -> Result<R, S> {
         let mut clone = TryReader {
@@ -32,6 +33,17 @@ impl<'l, T> TryReader<'l, T> {
                 Ok(result)
             },
             Err(err) => Err(err),
+        }
+    }
+
+    pub fn try_next<R, S, F>(&mut self, f: F) -> Result<R, S>
+    where F: FnOnce(&T) -> Result<R, S> {
+        match f(&self.elements[self.needle]) {
+            Ok(r) => {
+                self.next();
+                Ok(r)
+            },
+            Err(s) => Err(s),
         }
     }
 

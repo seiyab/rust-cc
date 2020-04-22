@@ -5,6 +5,7 @@ use std::io::{self, Write};
 use std::process;
 
 mod general;
+use general::TryReader;
 
 mod sourcecode;
 
@@ -12,7 +13,6 @@ use sourcecode::Position;
 use sourcecode::Span;
 
 mod token;
-use token::TokenReader;
 use token::tokenize;
 
 mod parse;
@@ -49,7 +49,7 @@ fn main() {
         }
     };
 
-    let mut token_reader = TokenReader::new(&tokens);
+    let mut token_reader = TryReader::new(&tokens);
 
     let root = match Root::parse(&mut token_reader) {
         Ok(root) => root,

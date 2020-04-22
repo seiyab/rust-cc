@@ -7,8 +7,6 @@ use sourcecode::Code;
 use sourcecode::Span;
 
 use token::token::Token;
-use token::token::Operator;
-use token::token::ReservedWord;
 use token::token::Dictionary;
 
 pub fn tokenize(s: &String) -> Result<Vec<Code<Token>>, Position> {
@@ -112,82 +110,6 @@ fn number(reader: &mut TryReader<char>) -> Result<i64, Option<i64>> {
                 }
             }).ok_or(None)
         }
-    }
-}
-
-pub struct TokenReader<'a> {
-    reader: TryReader<'a, Code<Token>>,
-}
-
-impl<'a> Iterator for TokenReader<'a> {
-    type Item = &'a Code<Token>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.reader.next()
-    }
-}
-
-impl TokenReader<'_> {
-    pub fn new(tokens: &Vec<Code<Token>>) -> TokenReader {
-        TokenReader { reader: TryReader::new(tokens) }
-    }
-
-    pub fn has_next(&self) -> bool {
-        self.reader.has_next()
-    }
-
-    pub fn try_<R, S, F>(&mut self, f: F) -> Result<R, S>
-    where F: FnOnce(&mut TryReader<Code<Token>>) -> Result<R, S> {
-        self.reader.try_(f).map(|(_, t)| t)
-    }
-
-    pub fn consume_reserved_word(&mut self, expected_word: ReservedWord)
-    -> Result<Code<ReservedWord>, Option<Span>> {
-        self.reader.try_(|reader| {
-            if let Some(token) = reader.next() {
-                match token.value {
-                    Token::ReservedWord(actual_word) =>
-                        if actual_word==expected_word { Ok(token.map_const(actual_word)) }
-                        else { Err(Some(token.span)) }
-                    _ => Err(Some(token.span)),
-                }
-            } else {
-                Err(None)
-            }
-        })
-        .map(|(_, t)| t)
-    }
-
-    pub fn consume_identifier(&mut self)
-    -> Result<Code<String>, Option<Span>> {
-        self.reader.try_(|reader| {
-            if let Some(token) = reader.next() {
-                match &token.value {
-                    Token::Identifier(name) => Ok(token.map_const(name.clone())),
-                    _ => Err(Some(token.span)),
-                }
-            } else {
-                Err(None)
-            }
-        })
-        .map(|(_, t)| t)
-    }
-
-    pub fn consume_operator(&mut self, expected_operator: Operator)
-    -> Result<Code<Operator>, Option<Span>> {
-        self.reader.try_(|reader| {
-            if let Some(token) = reader.next() {
-                match token.value {
-                    Token::Operator(actual_operator) => 
-                        if actual_operator == expected_operator { Ok(token.map_const(actual_operator)) }
-                        else { Err(Some(token.span)) }
-                    _ => Err(Some(token.span)),
-                }
-            } else {
-                Err(None)
-            }
-        })
-        .map(|(_, t)| t)
     }
 }
 

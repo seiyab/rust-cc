@@ -1,11 +1,13 @@
 use std::collections::HashSet;
 use std::iter::FromIterator;
 
+use general::TryReader;
+
 use sourcecode::Code;
 use sourcecode::Span;
 
+use token::Token;
 use token::Operator;
-use token::TokenReader;
 
 use parse::SyntaxTree;
 use parse::BinaryOperation;
@@ -26,7 +28,7 @@ impl Multiply {
 }
 
 impl SyntaxTree for Multiply {
-    fn parse(mut token_reader: &mut TokenReader)
+    fn parse(mut token_reader: &mut TryReader<Code<Token>>)
     -> Result<Multiply, (Option<Span>, String)> {
         let operators = HashSet::from_iter(vec![Operator::Mul, Operator::Div].into_iter());
         BinaryOperation::parse(&mut token_reader, &operators)
@@ -49,7 +51,7 @@ mod tests {
 
         let tokens = tokenize(&src.to_string()).unwrap();
 
-        let mut token_reader = TokenReader::new(&tokens);
+        let mut token_reader = TryReader::new(&tokens);
 
         let multiply = Multiply::parse(&mut token_reader).unwrap();
         let mut tail = multiply.tail();

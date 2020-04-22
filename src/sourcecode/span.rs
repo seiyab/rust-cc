@@ -34,14 +34,6 @@ pub struct Code<T> {
 }
 
 impl <T> Code<T> {
-    pub fn map<S, F>(&self, func: F) -> Code<S> 
-    where F: Fn(&T) -> S {
-        Code {
-            value: func(&self.value),
-            span: self.span,
-        }
-    }
-
     pub fn map_const<S>(&self, content: S) -> Code<S> {
         Code {
             value: content,

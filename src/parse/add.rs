@@ -1,12 +1,13 @@
 use std::collections::HashSet;
 use std::iter::FromIterator;
 
-use sourcecode::Position;
+use general::TryReader;
+
 use sourcecode::Span;
 use sourcecode::Code;
 
-use token::TokenReader;
 use token::Operator;
+use token::Token;
 
 use parse::SyntaxTree;
 use parse::BinaryOperation;
@@ -27,7 +28,7 @@ impl Add {
 }
 
 impl SyntaxTree for Add {
-    fn parse(mut token_reader: &mut TokenReader)
+    fn parse(mut token_reader: &mut TryReader<Code<Token>>)
     -> Result<Add, (Option<Span>, String)> {
         let operators = HashSet::from_iter(vec![Operator::Add, Operator::Sub].into_iter());
         BinaryOperation::parse(&mut token_reader, &operators)
@@ -38,7 +39,6 @@ impl SyntaxTree for Add {
         self.binary_operation.span()
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -51,7 +51,7 @@ mod tests {
 
         let tokens = tokenize(&src.to_string()).unwrap();
 
-        let mut token_reader = TokenReader::new(&tokens);
+        let mut token_reader = TryReader::new(&tokens);
 
         let add = Add::parse(&mut token_reader).unwrap();
         let mut tail = add.tail();

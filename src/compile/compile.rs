@@ -44,7 +44,16 @@ fn compile_statement(statement: &Statement, scope: &mut dyn Scope) -> Result<Vec
                 Err(e) => Err(e),
             }
         },
-        Statement::Return(ret) => compile_expression(ret.content(), scope)
+        Statement::Return(ret) => {
+            match compile_expression(ret.content(), scope) {
+                Ok(mut return_instructions) => {
+                    return_instructions.push(Instruction::Pop(Register::Rax));
+                    return_instructions.append(&mut scope.epilogue());
+                    Ok(return_instructions)
+                },
+                Err(e) => Err(e),
+            }
+        }
     }
 }
 

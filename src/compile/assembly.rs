@@ -47,7 +47,7 @@ impl Compiler {
         let index = self.next_label;
         self.next_label += 1;
         Label {
-            name: format!("L{}", index)
+            name: format!(".L{}", index)
         }
     }
 

@@ -43,6 +43,20 @@ impl Compiler {
         Ok(assembly)
     }
 
+    pub fn assembly_string(&self) -> String {
+        self.lines.iter().map(|line| {
+            match line {
+                Line::Instruction(instruction) => format!("  {}", instruction.destination_code()),
+                Line::Label(label) => format!("{}:", label.name),
+            }
+        })
+        .fold("".to_string(), |mut acc, s| {
+            acc.push('\n');
+            acc.push_str(&s);
+            acc
+        })
+    }
+
     fn new_label(&mut self) -> Label {
         let index = self.next_label;
         self.next_label += 1;

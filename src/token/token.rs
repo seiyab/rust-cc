@@ -50,12 +50,6 @@ impl Token {
     pub const fn right_round_bracket() -> Token {
         Token::Bracket(BracketSide::Right(Bracket::Round))
     }
-    pub const fn let_() -> Token {
-        Token::ReservedWord(ReservedWord::Let)
-    }
-    pub const fn return_() -> Token {
-        Token::ReservedWord(ReservedWord::Return)
-    }
 }
 
 #[derive(Debug, PartialEq, Clone, Copy, Hash, Eq)]
@@ -77,6 +71,9 @@ pub enum Operator {
 pub enum ReservedWord {
     Let,
     Return,
+    If,
+    Then,
+    Else,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]

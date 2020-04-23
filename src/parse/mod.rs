@@ -15,6 +15,8 @@ pub use self::root::Root;
 pub use self::statement::Statement;
 pub use self::statement::Return;
 pub use self::expression::Expression;
+pub use self::expression::IfExpression;
+pub use self::expression::PureExpression;
 pub use self::equality::Equality;
 pub use self::relational::Relational;
 pub use self::add::Add;

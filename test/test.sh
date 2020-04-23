@@ -47,6 +47,13 @@ try 3 "let one := 1
 let two := 2
 let three := one + two
 return three"
+try 3 "return if 1 < 2 then 3 else 4"
+try 7 \
+"let a := if 1+2 != 3
+  then 4 * 5
+  else 6 - 7
+let b := 8
+return a + b"
 
 echo OK
 

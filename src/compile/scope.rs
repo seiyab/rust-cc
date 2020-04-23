@@ -3,75 +3,75 @@ use std::collections::HashMap;
 use sourcecode::Code;
 use sourcecode::Span;
 
+use compile::assembly::Line;
 use compile::assembly::Instruction;
 use compile::assembly::Address;
 use compile::assembly::Register;
-
-pub trait Scope {
-    fn lookup(&self, target: &Code<String>) -> Result<Vec<Instruction>, Span>;
-    fn declare(&mut self, target: &String) -> Result<Vec<Instruction>, ()>;
-    fn prologue(&self) -> Vec<Instruction>;
-    fn epilogue(&self) -> Vec<Instruction>;
-}
+use compile::assembly::Writable;
+use compile::assembly::Readable;
 
 pub type PointerOffset = i64;
 
-pub struct CurrentScope {
+pub struct Scope {
     variables: HashMap<String, PointerOffset>,
     next: PointerOffset,
 }
 
-impl CurrentScope {
-    pub fn new() -> CurrentScope {
-        CurrentScope {
+impl Scope {
+    pub fn new() -> Self {
+        Self {
             variables: HashMap::new(),
             next: 0,
         }
     }
 }
 
-impl Scope for CurrentScope{
-    fn lookup(&self, target: &Code<String>) -> Result<Vec<Instruction>, Span> {
+impl Scope {
+    pub fn lookup(&self, target: &Code<String>) -> Result<Vec<Line>, Span> {
         self.variables
             .get(&target.value)
             .ok_or(target.span)
             .map(|&offset| {
                 vec![
-                    Instruction::Mov(Box::new(Register::Rax), Box::new(Register::Rbp)),
-                    Instruction::Sub(Register::Rax, Box::new(offset)),
-                    Instruction::Mov(Box::new(Register::Rax), Box::new(Address::new(Register::Rax))),
-                    Instruction::Push(Box::new(Register::Rax))
+                    Line::Instruction(Instruction::Mov(Writable::Register(Register::Rax), Readable::Register(Register::Rbp))),
+                    Line::Instruction(Instruction::Sub(Register::Rax, Readable::Literal(offset))),
+                    Line::Instruction(Instruction::Mov(Writable::Register(Register::Rax), Readable::Address(Address::new(Register::Rax)))),
+                    Line::Instruction(Instruction::Push(Readable::Register(Register::Rax)))
                 ]
             })
     }
 
     // RSPの指す値を代入
-    fn declare(&mut self, target: &String) -> Result<Vec<Instruction>, ()> {
+    pub fn declare(&mut self, target: &String) -> Result<Vec<Line>, ()> {
         self.next += 8;
         match self.variables.insert(target.clone(), self.next) {
             Some(_) => Err(()),
             None => {
-                Ok(vec![
-                    Instruction::Mov(Box::new(Register::Rax), Box::new(Register::Rbp)),
-                    Instruction::Sub(Register::Rax, Box::new(self.next)),
-                    Instruction::Pop(Register::Rdi),
-                    Instruction::Mov(Box::new(Address::new(Register::Rax)), Box::new(Register::Rdi))
-                ])
+                Ok(
+                    vec![
+                        Line::Instruction(Instruction::Mov(Writable::Register(Register::Rax), Readable::Register(Register::Rbp))),
+                        Line::Instruction(Instruction::Sub(Register::Rax, Readable::Literal(self.next))),
+                        Line::Instruction(Instruction::Pop(Register::Rdi)),
+                        Line::Instruction(Instruction::Mov(Writable::Address(Address::new(Register::Rax)), Readable::Register(Register::Rdi)))
+                    ]
+                )
             },
         }
     }
-    fn prologue(&self) -> Vec<Instruction> {
+
+    pub fn prologue(&self) -> Vec<Line> {
         vec![
-            Instruction::Push(Box::new(Register::Rbp)),
-            Instruction::Mov(Box::new(Register::Rbp), Box::new(Register::Rsp)),
-            Instruction::Sub(Register::Rsp, Box::new(self.next))
+            Line::Instruction(Instruction::Push(Readable::Register(Register::Rbp))),
+            Line::Instruction(Instruction::Mov(Writable::Register(Register::Rbp), Readable::Register(Register::Rsp))),
+            Line::Instruction(Instruction::Sub(Register::Rsp, Readable::Literal(self.next)))
         ]
     }
-    fn epilogue(&self) -> Vec<Instruction> {
+
+    pub fn epilogue(&self) -> Vec<Line> {
         vec![
-            Instruction::Mov(Box::new(Register::Rsp), Box::new(Register::Rbp)),
-            Instruction::Pop(Register::Rbp),
-            Instruction::Ret,
+            Line::Instruction(Instruction::Mov(Writable::Register(Register::Rsp), Readable::Register(Register::Rbp))),
+            Line::Instruction(Instruction::Pop(Register::Rbp)),
+            Line::Instruction(Instruction::Ret),
         ]
     }
 }

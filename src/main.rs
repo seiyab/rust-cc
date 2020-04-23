@@ -20,7 +20,8 @@ use parse::SyntaxTree;
 use parse::Root;
 
 mod compile;
-use compile::compile;
+use compile::Compiler;
+use compile::Line;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -63,10 +64,13 @@ fn main() {
         },
     };
 
-    match compile(&root) {
-        Ok(instructions) => {
-            for instruction in instructions {
-                println!("{}", instruction.destination_code());
+    match Compiler::compile(&root) {
+        Ok(compiler) => {
+            for line in compiler.lines {
+                match line {
+                    Line::Instruction(instruction) => println!("  {}", instruction.destination_code()),
+                    Line::Label(label) => println!("{}:", label.name),
+                }
             }
         },
         Err((span, message)) => {

@@ -7,6 +7,7 @@ use sourcecode::Code;
 use sourcecode::Span;
 
 use token::token::Token;
+use token::token::ReservedWord;
 use token::token::Dictionary;
 
 pub fn tokenize(s: &String) -> Result<Vec<Code<Token>>, Position> {
@@ -38,8 +39,11 @@ pub fn tokenize(s: &String) -> Result<Vec<Code<Token>>, Position> {
         if let Ok((consume, w)) = reader.try_(word) {
             let span = Span::new(line, pos, consume);
             let token = match w.as_str() {
-                "return" => Token::return_(),
-                "let" => Token::let_(),
+                "return" => Token::ReservedWord(ReservedWord::Return),
+                "let" => Token::ReservedWord(ReservedWord::Let),
+                "if" => Token::ReservedWord(ReservedWord::If),
+                "then" => Token::ReservedWord(ReservedWord::Then),
+                "else" => Token::ReservedWord(ReservedWord::Else),
                 wd => Token::Identifier(wd.to_string())
             };
             tokens.push(Code {

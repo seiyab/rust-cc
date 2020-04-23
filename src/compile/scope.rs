@@ -3,12 +3,12 @@ use std::collections::HashMap;
 use sourcecode::Code;
 use sourcecode::Span;
 
-use compile::assembly::Line;
-use compile::assembly::Instruction;
-use compile::assembly::Address;
-use compile::assembly::Register;
-use compile::assembly::Writable;
-use compile::assembly::Readable;
+use super::assembly::Line;
+use super::assembly::Instruction;
+use super::assembly::Address;
+use super::assembly::Register;
+use super::assembly::Writable;
+use super::assembly::Readable;
 
 pub type PointerOffset = i64;
 

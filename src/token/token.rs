@@ -8,6 +8,7 @@ pub enum Token {
     Number(i64),
     Bracket(BracketSide),
     Identifier(String),
+    LineBreak,
 }
 
 impl Token {

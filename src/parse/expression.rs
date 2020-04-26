@@ -71,6 +71,7 @@ impl SyntaxTree for IfExpression {
             Ok(expression) => expression,
             Err(e) => return Err(e),
         };
+        token_reader.drop_while(|token| token.value == Token::LineBreak);
         match token_reader.next() {
             Some(token) => match token.value {
                 Token::ReservedWord(ReservedWord::Then) => (),
@@ -82,6 +83,7 @@ impl SyntaxTree for IfExpression {
             Ok(expression) => expression,
             Err(e) => return Err(e),
         };
+        token_reader.drop_while(|token| token.value == Token::LineBreak);
         match token_reader.next() {
             Some(token) => match token.value {
                 Token::ReservedWord(ReservedWord::Else) => (),

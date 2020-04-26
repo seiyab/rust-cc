@@ -47,6 +47,7 @@ impl Assignment {
 
     fn parse(token_reader: &mut TryReader<Code<Token>>)
     -> Result<Assignment, (Option<Span>, String)> {
+        token_reader.drop_while(|token| token.value == Token::LineBreak);
         match token_reader.try_next(|token| {
             match token.value {
                 Token::ReservedWord(ReservedWord::Let) => Ok(()),
@@ -99,6 +100,7 @@ impl Return {
 
     fn parse(token_reader: &mut TryReader<Code<Token>>)
     -> Result<Return, (Option<Span>, String)> {
+        token_reader.drop_while(|token| token.value == Token::LineBreak);
         match token_reader.try_next(|token| {
             match token.value {
                 Token::ReservedWord(ReservedWord::Return) => Ok(token.span),

@@ -23,6 +23,11 @@ pub fn tokenize(s: &String) -> Result<Vec<Code<Token>>, Position> {
             continue;
         }
         if let Ok(_) = reader.try_(|mut r| character(&mut r, '\n')) {
+            let span = Span::new(line, pos, 1);
+            tokens.push(Code {
+                value: Token::LineBreak,
+                span,
+            });
             pos = 0;
             line += 1;
             continue;

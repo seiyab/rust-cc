@@ -21,10 +21,20 @@ use parse::Root;
 mod compile;
 use compile::Compiler;
 
-fn main() -> Result<(), String> {
+fn main() {
+    match run() {
+        Exit::Success => process::exit(0),
+        Exit::Failure(reason) => {
+            eprintln!("{}", reason);
+            process::exit(20);
+        }
+    }
+}
+
+fn run() -> Exit {
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
-        return Err("引数の個数が正しくありません".to_string());
+        return Exit::Failure("引数の個数が正しくありません".to_string());
     }
 
     let main_label = if env::var("OS").map(|var| var == "MAC".to_string()).unwrap_or(false) {
@@ -42,7 +52,7 @@ fn main() -> Result<(), String> {
     let tokens = match tokenize(&src) {
         Ok(tokens) => tokens,
         Err(pos) => {
-            return Err(point_error_position(&src, pos, "トークナイズできません"));
+            return Exit::Failure(point_error_position(&src, pos, "トークナイズできません"));
         }
     };
 
@@ -51,10 +61,10 @@ fn main() -> Result<(), String> {
     let root = match Root::parse(&mut token_reader) {
         Ok(root) => root,
         Err((Some(span), message)) => {
-            return Err(point_error_span(&src, span, message.as_str()))
+            return Exit::Failure(point_error_span(&src, span, message.as_str()))
         },
         Err((None, message)) => {
-            return Err(message);
+            return Exit::Failure(message);
         },
     };
 
@@ -63,16 +73,19 @@ fn main() -> Result<(), String> {
             println!("{}", compiler.assembly_string());
         },
         Err((span, message)) => {
-            return Err(point_error_span(&src, span, message.as_str()))
+            return Exit::Failure(point_error_span(&src, span, message.as_str()))
         }
     }
-
-    process::exit(0);
+    Exit::Success
 }
 
 
 fn point_error_position(src: &String, position: Position, message: &str) -> String {
     let mut err = src.as_str().split("\n").nth(position.line).unwrap().to_string();
+    err.push('\n');
+    err.push('\n');
+    err.push('\n');
+    err.push('\n');
     err.push_str(format!("{}^{}", " ".to_string().repeat(position.pos).as_str(), message).as_str());
     err
 }
@@ -84,6 +97,7 @@ fn point_error_span(src: &String, span: Span, message: &str) -> String {
     for i in start.line..end.line+1 {
         let line = lines[i];
         err.push_str(line);
+        err.push('\n');
         let line_start = Position{ line: i, pos: 0 };
         let line_end = Position{ line: i, pos: line.len() };
         let indicator_span = Span{ start: max(start, line_start), end: min(end, line_end) };
@@ -98,3 +112,7 @@ fn point_error_span(src: &String, span: Span, message: &str) -> String {
     err
 }
 
+enum Exit {
+    Success,
+    Failure(String),
+}

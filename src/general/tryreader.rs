@@ -40,14 +40,17 @@ impl<'l, T> TryReader<'l, T> {
         }
     }
 
-    pub fn try_next<R, S, F>(&mut self, f: F) -> Result<R, S>
+    pub fn try_next<R, S, F>(&mut self, f: F) -> Result<R, Option<S>>
     where F: FnOnce(&T) -> Result<R, S> {
+        if !self.has_next() {
+            return Err(None)
+        }
         match f(&self.elements[self.needle]) {
             Ok(r) => {
                 self.next();
                 Ok(r)
             },
-            Err(s) => Err(s),
+            Err(s) => Err(Some(s)),
         }
     }
 

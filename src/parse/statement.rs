@@ -55,7 +55,7 @@ impl Assignment {
             }
         }) {
             Ok(_) => (),
-            Err(err) => return Err((err, String::from("letを期待していました")))
+            Err(err) => return Err((err.and_then(|x| x), String::from("letを期待していました")))
         };
         let identifier = match token_reader.try_next(|token| {
             match &token.value {
@@ -64,7 +64,7 @@ impl Assignment {
             }
         }) {
             Ok(name) => name,
-            Err(span) => return Err((Some(span), "識別子を期待していました。".to_string()))
+            Err(span) => return Err((span, "識別子を期待していました。".to_string()))
         };
         match token_reader.try_next(|token| {
             match token.value {
@@ -73,7 +73,7 @@ impl Assignment {
             }
         }) {
             Ok(_) => (),
-            Err(err) => return Err((Some(err), String::from("代入演算子を期待していました"))),
+            Err(err) => return Err((err, String::from("代入演算子を期待していました"))),
         };
         let content = match Expression::parse(token_reader) {
             Ok(expr) => expr,
@@ -108,7 +108,7 @@ impl Return {
             }
         }) {
             Ok(ret_span) => Ok(ret_span),
-            Err(err) => Err((Some(err), String::from("returnを期待していました")))
+            Err(err) => Err((err, String::from("returnを期待していました")))
         }
         .and_then(|ret_span| match Expression::parse(token_reader) {
             Ok(content) => Ok(Return{content, return_span: ret_span}),

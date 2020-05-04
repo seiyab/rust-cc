@@ -45,12 +45,6 @@ impl Token {
     pub const fn assign() -> Token {
         Token::Operator(Operator::Assign)
     }
-    pub const fn left_round_bracket() -> Token {
-        Token::Bracket(BracketSide::Left(Bracket::Round))
-    }
-    pub const fn right_round_bracket() -> Token {
-        Token::Bracket(BracketSide::Right(Bracket::Round))
-    }
 }
 
 #[derive(Debug, PartialEq, Clone, Copy, Hash, Eq)]
@@ -86,6 +80,7 @@ pub enum BracketSide {
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Bracket {
     Round,
+    Curly,
 }
 
 pub struct Dictionary {
@@ -141,8 +136,10 @@ impl Dictionary {
         string_to_token.insert(String::from(">="), Token::ge());
         string_to_token.insert(String::from("=="), Token::eq());
         string_to_token.insert(String::from("!="), Token::neq());
-        string_to_token.insert(String::from("("), Token::left_round_bracket());
-        string_to_token.insert(String::from(")"), Token::right_round_bracket());
+        string_to_token.insert(String::from("("), Token::Bracket(BracketSide::Left(Bracket::Round)));
+        string_to_token.insert(String::from(")"), Token::Bracket(BracketSide::Right(Bracket::Round)));
+        string_to_token.insert(String::from("{"), Token::Bracket(BracketSide::Left(Bracket::Curly)));
+        string_to_token.insert(String::from("}"), Token::Bracket(BracketSide::Right(Bracket::Curly)));
         string_to_token.insert(String::from(":="), Token::assign());
 
         Dictionary::of(&string_to_token)

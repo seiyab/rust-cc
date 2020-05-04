@@ -24,9 +24,7 @@ impl Scope {
             next: 0,
         }
     }
-}
 
-impl Scope {
     pub fn lookup(&self, target: &Code<String>) -> Result<Vec<Line>, Span> {
         self.variables
             .get(&target.value)

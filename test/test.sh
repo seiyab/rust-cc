@@ -75,5 +75,16 @@ return if x * 2 < 5 then {
   let v := 5
   u * v
 }"
+try 3 "
+let x := 1
+let y := if x == 1 then {
+    let x := 2
+    x
+} else {
+    let x := 3
+    x
+}
+return x + y
+"
 echo OK
 

@@ -137,6 +137,7 @@ impl  Compiler {
     }
 
     fn compile_block_expression(&mut self, expr: &BlockExpression, scope: &mut Scope) -> Result<Vec<Line>, (Span, String)> {
+        scope.into_block();
         let mut lines = Vec::new();
         for stmt in &expr.statements {
             match self.compile_statement(stmt, scope) {
@@ -148,6 +149,7 @@ impl  Compiler {
             Ok(mut expr_lines) => lines.append(&mut expr_lines),
             Err(e) => return Err(e),
         }
+        scope.outof_block();
         Ok(lines)
     }
 

@@ -54,6 +54,37 @@ try 7 \
   else 6 - 7
 let b := 8
 return a + b"
-
+try 1 "return { 1 }"
+try 3 "return {
+  let x := 3
+  3
+}"
+try 1 "return {
+  let a := 1
+  let b := 2
+  b - a
+}"
+try 20 "
+let x := 3
+return if x * 2 < 5 then {
+  let a := 1
+  let b := 2
+  a + b
+} else {
+  let u := 4
+  let v := 5
+  u * v
+}"
+try 3 "
+let x := 1
+let y := if x == 1 then {
+    let x := 2
+    x
+} else {
+    let x := 3
+    x
+}
+return x + y
+"
 echo OK
 

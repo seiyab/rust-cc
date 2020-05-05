@@ -5,14 +5,18 @@ use sourcecode::Span;
 use sourcecode::Code;
 
 use token::Token;
+use token::BracketSide;
+use token::Bracket;
 use token::ReservedWord;
 
-use parse::Equality;
 use parse::SyntaxTree;
+use parse::Statement;
+use parse::Equality;
 
 pub enum Expression {
     PureExpression(PureExpression),
     IfExpression(IfExpression),
+    BlockExpression(BlockExpression),
 }
 
 impl SyntaxTree for Expression {
@@ -20,6 +24,11 @@ impl SyntaxTree for Expression {
     -> Result<Expression, (Option<Span>, String)> {
         match token_reader.try_(|reader| IfExpression::parse(reader)) {
             Ok((_, expr)) => return Ok(Self::IfExpression(expr)),
+            _ => (),
+        }
+
+        match token_reader.try_(|reader| BlockExpression::parse(reader)) {
+            Ok((_, expr)) => return Ok(Self::BlockExpression(expr)),
             _ => (),
         }
 
@@ -31,6 +40,7 @@ impl SyntaxTree for Expression {
         match &self {
             Self::PureExpression(expr) => expr.span(),
             Self::IfExpression(expr) => expr.span(),
+            Self::BlockExpression(expr) => expr.span(),
         }
     }
 }
@@ -71,6 +81,7 @@ impl SyntaxTree for IfExpression {
             Ok(expression) => expression,
             Err(e) => return Err(e),
         };
+        token_reader.drop_while(|token| token.value == Token::LineBreak);
         match token_reader.next() {
             Some(token) => match token.value {
                 Token::ReservedWord(ReservedWord::Then) => (),
@@ -82,6 +93,7 @@ impl SyntaxTree for IfExpression {
             Ok(expression) => expression,
             Err(e) => return Err(e),
         };
+        token_reader.drop_while(|token| token.value == Token::LineBreak);
         match token_reader.next() {
             Some(token) => match token.value {
                 Token::ReservedWord(ReservedWord::Else) => (),
@@ -105,5 +117,67 @@ impl SyntaxTree for IfExpression {
         self.condition.span()
             .plus(&self.then.span())
             .plus(&self.else_.span())
+    }
+}
+
+pub struct BlockExpression {
+    pub statements: Vec::<Statement>,
+    pub outcome: Box<Expression>,
+    open: Span,
+    close: Span,
+}
+
+impl SyntaxTree for BlockExpression {
+    fn parse(token_reader: &mut TryReader<Code<Token>>)
+    -> Result<Self, (Option<Span>, String)> {
+        let open = match token_reader.try_next(|token| {
+            match token.value {
+                Token::Bracket(BracketSide::Left(Bracket::Curly)) => Ok(token.span),
+                _ => Err(token.span)
+            }
+        }) {
+            Ok(span) => span,
+            Err(e) => return Err((e, "{ を期待していました".to_string())),
+        };
+
+        token_reader.drop_while(|token| token.value == Token::LineBreak);
+
+        let mut statements = Vec::new();
+        while let Ok((_, statement)) = token_reader.try_(|reader| Statement::parse(reader)) {
+            statements.push(statement)
+        }
+
+        token_reader.drop_while(|token| token.value == Token::LineBreak);
+
+        let outcome = Box::new(match token_reader.try_(|reader| Expression::parse(reader)) {
+            Ok((_, expr)) => expr,
+            Err(e) => return Err(e),
+        });
+
+        token_reader.drop_while(|token| token.value == Token::LineBreak);
+
+        let close = match token_reader.try_next(|token| {
+            match token.value {
+                Token::Bracket(BracketSide::Right(Bracket::Curly)) => Ok(token.span),
+                _ => Err((Some(token.span), "} を期待していました".to_string())),
+            }
+        }) {
+            Ok(span) => span,
+            Err(Some(e)) => return Err(e),
+            _ => return Err((None, "ブロックを期待しいていました".to_string())),
+        };
+
+        Ok(Self {
+            open,
+            close,
+            statements,
+            outcome,
+        })
+    }
+
+    fn span(&self) -> Span {
+        self.statements.iter().fold(self.open, |acc, s| acc.plus(&s.span()))
+            .plus(&self.outcome.span())
+            .plus(&self.close)
     }
 }

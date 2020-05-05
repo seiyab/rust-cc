@@ -15,6 +15,8 @@ pub type PointerOffset = i64;
 pub struct Scope {
     variables: HashMap<String, PointerOffset>,
     next: PointerOffset,
+    block_stack: Vec<i64>,
+    block_seq: i64,
 }
 
 impl Scope {
@@ -22,14 +24,19 @@ impl Scope {
         Self {
             variables: HashMap::new(),
             next: 0,
+            block_stack: Vec::new(),
+            block_seq: 1,
         }
     }
-}
 
-impl Scope {
     pub fn lookup(&self, target: &Code<String>) -> Result<Vec<Line>, Span> {
+        let id = self.block_stack
+            .iter().rev()
+            .map(|i| format!("{}#{}", &target.value, i))
+            .find(|id| self.variables.get(id) != None)
+            .unwrap_or(format!("{}#{}", &target.value, 0));
         self.variables
-            .get(&target.value)
+            .get(&id)
             .ok_or(target.span)
             .map(|&offset| {
                 vec![
@@ -44,7 +51,7 @@ impl Scope {
     // RSPの指す値を代入
     pub fn declare(&mut self, target: &String) -> Result<Vec<Line>, ()> {
         self.next += 8;
-        match self.variables.insert(target.clone(), self.next) {
+        match self.variables.insert(self.variable_id(target), self.next) {
             Some(_) => Err(()),
             None => {
                 Ok(
@@ -73,5 +80,17 @@ impl Scope {
             Line::Instruction(Instruction::Pop(Register::Rbp)),
             Line::Instruction(Instruction::Ret),
         ]
+    }
+
+    fn variable_id(&self, name: &String) -> String {
+        format!("{}#{}", name, self.block_stack.last().unwrap_or(&0))
+    }
+
+    pub fn into_block(&mut self) {
+        self.block_seq += 1;
+        self.block_stack.push(self.block_seq);
+    }
+    pub fn outof_block(&mut self) {
+        self.block_stack.pop();
     }
 }

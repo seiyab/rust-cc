@@ -9,6 +9,7 @@ pub enum Token {
     Bracket(BracketSide),
     Identifier(String),
     LineBreak,
+    Comma,
 }
 
 impl Token {

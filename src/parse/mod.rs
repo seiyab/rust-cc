@@ -24,3 +24,4 @@ pub use self::add::Add;
 pub use self::multiply::Multiply;
 pub use self::unary::Unary;
 pub use self::primary::Primary;
+pub use self::primary::FnCall;

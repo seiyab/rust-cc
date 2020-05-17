@@ -22,6 +22,15 @@ pub fn tokenize(s: &String) -> Result<Vec<Code<Token>>, Position> {
             pos += consume;
             continue;
         }
+        if let Ok((consume, _)) = reader.try_(|mut r| character(&mut r, ',')) {
+            let span = Span::new(line, pos, consume);
+            tokens.push(Code {
+                value: Token::Comma,
+                span,
+            });
+            pos += consume;
+            continue;
+        }
         if let Ok(_) = reader.try_(|mut r| character(&mut r, '\n')) {
             let span = Span::new(line, pos, 1);
             tokens.push(Code {
@@ -97,15 +106,17 @@ fn character(reader: &mut TryReader<char>, target: char) -> Result<(), Option<()
 }
 
 fn word(reader: &mut TryReader<char>) -> Result<String, Option<String>> {
-    match reader.next() {
-        Some(&c) if c.is_alphanumeric() => {
-            match word(reader) {
-                Ok(s) => Ok(String::from(format!("{}{}", c, s))),
-                _ => Ok(c.to_string()),
-            }
-        },
-        _ => Err(None),
-    }
+    reader.try_(|r| {
+        match r.next() {
+            Some(&c) if c.is_alphanumeric() => {
+                match word(r) {
+                    Ok(s) => Ok(String::from(format!("{}{}", c, s))),
+                    _ => Ok(c.to_string()),
+                }
+            },
+            _ => Err(None),
+        }
+    }).map(|(_, r)| r)
 }
 
 fn number(reader: &mut TryReader<char>) -> Result<i64, Option<i64>> {
@@ -126,6 +137,7 @@ fn number(reader: &mut TryReader<char>) -> Result<i64, Option<i64>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use super::super::token::*;
 
     #[test]
     fn test_tokenize() {
@@ -194,5 +206,14 @@ mod tests {
         let src = "2".chars().collect();
         let mut reader = TryReader::new(&src);
         assert_eq!(number(&mut reader), Ok(2));
+    }
+
+    #[test]
+    fn test_tokenize_fn_call() {
+        let src = "foo(1,)".to_string();
+        let tokens = tokenize(&src).unwrap();
+
+        assert_eq!(tokens[0].value, Token::Identifier("foo".to_string()));
+        assert_eq!(tokens[1].value, Token::Bracket(BracketSide::Left(Bracket::Round)));
     }
 }

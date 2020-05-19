@@ -8,33 +8,29 @@ use sourcecode::Code;
 use sourcecode::Span;
 
 use parse::SyntaxTree;
-use parse::Statement;
+use parse::Func;
 
 pub struct Root {
-    statements: Vec<Statement>,
+    pub funcs: Vec<Func>,
 }
 
-impl Root {
-    pub fn statements(&self) -> &Vec<Statement> {
-        &self.statements
-    }
-}
 
 impl SyntaxTree for Root {
     fn parse(mut token_reader: &mut TryReader<Code<Token>>)
     -> Result<Root, (Option<Span>, String)> {
-        let mut statements = Vec::new();
+        let mut funcs = Vec::new();
         while token_reader.has_next() {
-            match Statement::parse(&mut token_reader) {
-                Ok(statement) => statements.push(statement),
+            match Func::parse(&mut token_reader) {
+                Ok(func) => funcs.push(func),
                 Err(err) => return Err(err),
             }
+            token_reader.drop_while(|token| token.value == Token::LineBreak);
         }
-        Ok(Root{statements})
+        Ok(Root{funcs})
     }
 
     fn span(&self) -> Span {
-        self.statements
+        self.funcs
             .iter()
             .map(|stmt| stmt.span())
             .map(FreeMonoid::Some)

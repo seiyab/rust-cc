@@ -67,10 +67,11 @@ impl Scope {
     }
 
     pub fn prologue(&self) -> Vec<Line> {
+        let stack_size = if self.next % 16 == 0 { self.next } else { self.next + 8 };
         vec![
             Line::Instruction(Instruction::Push(Readable::Register(Register::Rbp))),
             Line::Instruction(Instruction::Mov(Writable::Register(Register::Rbp), Readable::Register(Register::Rsp))),
-            Line::Instruction(Instruction::Sub(Register::Rsp, Readable::Literal(self.next)))
+            Line::Instruction(Instruction::Sub(Register::Rsp, Readable::Literal(stack_size)))
         ]
     }
 

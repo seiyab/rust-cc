@@ -9,6 +9,7 @@ pub enum Token {
     Bracket(BracketSide),
     Identifier(String),
     LineBreak,
+    Comma,
 }
 
 impl Token {
@@ -69,6 +70,7 @@ pub enum ReservedWord {
     If,
     Then,
     Else,
+    Func,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]

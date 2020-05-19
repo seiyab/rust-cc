@@ -31,6 +31,7 @@ pub enum Instruction {
     // jump
     Je(Label),
     Jmp(Label),
+    Call(Label),
     Ret,
 }
 
@@ -55,6 +56,7 @@ impl Instruction {
             &Instruction::Movzb(register, x) => format!("movzx {}, {}", register.symbol(), x.symbol()),
             &Instruction::Je(label) => format!("je {}", label.name),
             &Instruction::Jmp(label) => format!("jmp {}", label.name),
+            &Instruction::Call(label) => format!("call {}", label.name),
             &Instruction::Ret => format!("ret"),
         }
     }
@@ -95,21 +97,42 @@ impl Writable {
 #[derive(Debug, Clone, Copy)]
 pub enum Register {
     Rax,
+    Rcx,
     Rbp,
     Rdi,
+    Rdx,
+    Rsi,
     Rsp,
+    R8,
+    R9,
     Al,
 }
 
 impl Register {
     fn symbol(&self) -> String {
         match &self {
-            &Register::Rax => String::from("rax"),
-            &Register::Rbp => String::from("rbp"),
-            &Register::Rdi => String::from("rdi"),
-            &Register::Rsp => String::from("rsp"),
-            &Register::Al => String::from("al"),
+            &Self::Rax => "rax".to_string(),
+            &Self::Rcx => "rcx".to_string(),
+            &Self::Rbp => "rbp".to_string(),
+            &Self::Rdi => "rdi".to_string(),
+            &Self::Rdx => "rdx".to_string(),
+            &Self::Rsi => "rsi".to_string(),
+            &Self::Rsp => "rsp".to_string(),
+            &Self::R8 => "r8".to_string(),
+            &Self::R9 => "r9".to_string(),
+            &Self::Al => "al".to_string(),
         }
+    }
+
+    pub fn fn_args() -> Vec<Self> {
+        vec![
+            Self::Rdi,
+            Self::Rsi,
+            Self::Rdx,
+            Self::Rcx,
+            Self::R8,
+            Self::R9,
+        ]
     }
 }
 

@@ -17,74 +17,66 @@ try() {
   fi
 }
 
-try 0 "return 0"
-try 42 "return 42"
-try 3 "return 1+2"
-try 2 "return 5-3"
-try 21 "return 5+20-4"
-try 10 "return 13 - 3"
-try 41 "return 12 + 34 - 5 "
-try 12 "return 3 * 4"
-try 3 "return 6 / 2"
-try 5 "return 1 + 2 * 3 - 4 / 2"
-try 10 "return (2 * 3) + (1 * 4)"
-try 17 "return -3 + 20"
-try 7 "return 10 - +(1+2)"
-try 1 "return 4 > 3"
-try 0 "return 7 <= 6"
-try 0 "return 1 + 2 + 3 + 4 == 3 * 2"
-try 1 "return 1 + 6 / 2 == 2 * 2"
-try 1 "return 7 != 7 + 1"
-try 5 "let x := 5
-return x"
-try 2 "let a := 1
-let b := 3
-return a + b / 3"
-try 14 "let a := 3
-let b := 5 * 6 - 8
-return a + b / 2"
-try 3 "let one := 1
-let two := 2
-let three := one + two
-return three"
-try 3 "return if 1 < 2 then 3 else 4"
-try 7 \
-"let a := if 1+2 != 3
-  then 4 * 5
-  else 6 - 7
-let b := 8
-return a + b"
-try 1 "return { 1 }"
-try 3 "return {
+try 0 "func main() 0"
+try 3 "func main() 1+2"
+try 21 "func main() 5+20-4"
+try 12 "func main() 3 * 4"
+try 5 "func main() 1 + 2 * 3 - 4 / 2"
+try 10 "func main() (2 * 3) + (1 * 4)"
+try 17 "func main() -3 + 20"
+try 7 "func main() 10 - +(1+2)"
+try 1 "func main() 4 > 3"
+try 0 "func main() 7 <= 6"
+try 0 "func main() 1 + 2 + 3 + 4 == 3 * 2"
+try 1 "func main() 7 != 7 + 1"
+try 1 "func main() { 1 }"
+try 5 "func main() {
+  let x := 5
+  x
+}"
+try 14 "func main() {
+  let a := 3
+  let b := 5 * 6 - 8
+  a + b / 2
+}"
+try 3 "func main() {
+  let one := 1
+  let two := 2
+  let three := one + two
+  three
+}"
+try 3 "func main() if 1 < 2 then 3 else 4"
+try 20 "func main() {
   let x := 3
-  3
+  if x * 2 < 5 then {
+    let a := 1
+    let b := 2
+    a + b
+  } else {
+    let u := 4
+    let v := 5
+    u * v
+  }
 }"
-try 1 "return {
-  let a := 1
-  let b := 2
-  b - a
+try 3 "func main() {
+  let x := 1
+  let y := if x == 1 then {
+      let x := 2
+      x
+  } else {
+      let x := 3
+      x
+  }
+  x + y
 }"
-try 20 "
-let x := 3
-return if x * 2 < 5 then {
-  let a := 1
-  let b := 2
-  a + b
-} else {
-  let u := 4
-  let v := 5
-  u * v
-}"
-try 3 "
-let x := 1
-let y := if x == 1 then {
-    let x := 2
-    x
-} else {
-    let x := 3
-    x
+try 8 "func main() {
+  fib(6)
 }
-return x + y
-"
+
+func fib(n) {
+  if n == 0 then { 0 }
+  else if n == 1 then { 1 }
+  else { fib(n-1) + fib(n-2) }
+}"
 echo OK
 

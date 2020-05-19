@@ -70,6 +70,7 @@ pub enum ReservedWord {
     If,
     Then,
     Else,
+    Func,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]

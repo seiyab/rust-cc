@@ -1,8 +1,12 @@
+use std::env;
+
 use sourcecode::Span;
 
 use token::Operator;
 
+use parse::SyntaxTree;
 use parse::Root;
+use parse::Func;
 use parse::Statement;
 use parse::Expression;
 use parse::PureExpression;
@@ -24,33 +28,75 @@ use super::assembly::Register;
 use super::assembly::Readable;
 use super::assembly::Writable;
 
-pub struct Compiler {
+pub struct Compiler{
+    pub func_compilers: Vec<FuncCompiler>,
+}
+
+impl Compiler {
+    pub fn compile(syntaxtree: &Root) -> Result<Self, (Span, String)> {
+        let mut func_compilers = Vec::new();
+        for func in &syntaxtree.funcs {
+            match FuncCompiler::compile(func) {
+                Ok(c) => func_compilers.push(c),
+                Err(e) => return Err(e),
+            }
+        }
+        Ok(Self{func_compilers})
+    }
+
+    pub fn assembly_string(&self) -> String {
+        self.func_compilers.iter().map(|fc| fc.assembly_string())
+        .fold("".to_string(), |mut acc, s| {
+            acc.push_str(&"\n\n");
+            acc.push_str(&s);
+            acc
+        })
+    }
+}
+
+pub struct FuncCompiler {
     pub lines: Vec<Line>,
     next_label: u64,
     scope: Scope,
     stack_depth: i64,
 }
 
-impl  Compiler {
-    pub fn compile(syntaxtree: &Root) -> Result<Self, (Span, String)> {
-        // let mut scope = Scope::new();
+impl FuncCompiler {
+    pub fn compile(func: &Func) -> Result<Self, (Span, String)> {
         let mut assembly = Self{
             lines: Vec::new(),
             next_label: 0,
             scope: Scope::new(),
             stack_depth: 0,
         };
-        let mut processes = Vec::new();
-        for statement in syntaxtree.statements() {
-            match assembly.compile_statement(statement) {
-                Ok(mut statement_instructions) => processes.append(&mut statement_instructions),
-                Err(e) => return Err(e),
+        let mut arg_lines = Vec::new();
+        for (arg, reg) in func.args.iter().zip(Register::fn_args()) {
+            arg_lines.push(Line::Instruction(Instruction::Push(Readable::Register(reg))));
+            match assembly.scope.declare(arg) {
+                Ok(mut lines) => arg_lines.append(&mut lines),
+                Err(_) => return Err((func.span().clone(), "引数エラー".to_string())), // TODO
             }
         }
+        let mut body_lines = match assembly.compile_expression(&func.body) {
+            Ok(lines) => lines,
+            Err(e) => return Err(e),
+        };
+
+        assembly.lines.push(Line::Label(Self::func_label(&func.name)));
         assembly.lines.append(&mut assembly.scope.prologue());
-        assembly.lines.append(&mut processes);
+        assembly.lines.append(&mut arg_lines);
+        assembly.lines.append(&mut body_lines);
+        assembly.lines.push(Line::Instruction(Instruction::Pop(Register::Rax)));
         assembly.lines.append(&mut assembly.scope.epilogue());
         Ok(assembly)
+    }
+
+    fn func_label(name: &String) -> Label {
+        if env::var("OS").map(|var| var == "MAC".to_string()).unwrap_or(false) {
+            Label{name: format!("_{}", name)}
+        } else {
+            Label{name: name.clone()}
+        }
     }
 
     pub fn assembly_string(&self) -> String {
@@ -426,13 +472,17 @@ impl  Compiler {
                 self.stack_depth -= 8;
         }
         let padding = (16 - self.stack_depth % 16) % 16;
-        lines.push(Line::Instruction(Instruction::Add(Register::Rsp, Readable::Literal(padding))));
+        lines.push(Line::Instruction(Instruction::Sub(Register::Rsp, Readable::Literal(padding))));
         self.stack_depth += padding;
 
-        lines.push(Line::Instruction(Instruction::Call(fn_call.func.value.clone())));
+        let fn_label = Self::func_label(&fn_call.func.value);
+        lines.push(Line::Instruction(Instruction::Call(fn_label)));
 
-        lines.push(Line::Instruction(Instruction::Sub(Register::Rsp, Readable::Literal(padding))));
+        lines.push(Line::Instruction(Instruction::Add(Register::Rsp, Readable::Literal(padding))));
         self.stack_depth -= padding;
+
+        lines.push(Line::Instruction(Instruction::Push(Readable::Register(Register::Rax))));
+        self.stack_depth += 8;
         Ok(lines)
     }
 

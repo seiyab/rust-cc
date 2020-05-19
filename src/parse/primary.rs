@@ -191,5 +191,13 @@ mod tests {
 
         assert_eq!(fn_call.func.value, "bar".to_string());
         assert_eq!(fn_call.args.len(), 2);
+
+        let src = "(foo() + bar(1, 2))";
+
+        let tokens = tokenize(&src.to_string()).unwrap();
+
+        let mut token_reader = TryReader::new(&tokens);
+
+        Primary::parse(&mut token_reader).unwrap();
     }
 }

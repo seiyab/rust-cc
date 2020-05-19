@@ -46,7 +46,7 @@ fn run() -> Exit {
     println!(".intel_syntax noprefix");
     println!("{}", format!(".global {}", main_label));
     println!("");
-    println!("{}", format!("{}:", main_label));
+    //println!("{}", format!("{}:", main_label));
 
     let src = args[1].clone();
     let tokens = match tokenize(&src) {

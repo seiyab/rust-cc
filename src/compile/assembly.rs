@@ -31,7 +31,7 @@ pub enum Instruction {
     // jump
     Je(Label),
     Jmp(Label),
-    Call(String),
+    Call(Label),
     Ret,
 }
 
@@ -56,7 +56,7 @@ impl Instruction {
             &Instruction::Movzb(register, x) => format!("movzx {}, {}", register.symbol(), x.symbol()),
             &Instruction::Je(label) => format!("je {}", label.name),
             &Instruction::Jmp(label) => format!("jmp {}", label.name),
-            &Instruction::Call(name) => format!("call {}", name),
+            &Instruction::Call(label) => format!("call {}", label.name),
             &Instruction::Ret => format!("ret"),
         }
     }

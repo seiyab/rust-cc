@@ -1,6 +1,7 @@
 mod syntaxtree;
 mod binary_operation;
 mod root;
+mod func;
 mod statement;
 mod expression;
 mod equality;
@@ -12,6 +13,7 @@ mod primary;
 pub use self::syntaxtree::SyntaxTree;
 pub use self::binary_operation::BinaryOperation;
 pub use self::root::Root;
+pub use self::func::Func;
 pub use self::statement::Statement;
 pub use self::statement::Return;
 pub use self::expression::Expression;

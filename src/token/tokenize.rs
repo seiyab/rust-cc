@@ -58,6 +58,7 @@ pub fn tokenize(s: &String) -> Result<Vec<Code<Token>>, Position> {
                 "if" => Token::ReservedWord(ReservedWord::If),
                 "then" => Token::ReservedWord(ReservedWord::Then),
                 "else" => Token::ReservedWord(ReservedWord::Else),
+                "func" => Token::ReservedWord(ReservedWord::Func),
                 wd => Token::Identifier(wd.to_string())
             };
             tokens.push(Code {
